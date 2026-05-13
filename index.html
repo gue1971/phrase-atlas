@@ -9,14 +9,14 @@
   <body>
     <header class="top-bar">
       <div class="view-toggle" aria-label="表示切替">
-        <button id="tocViewButton" class="toggle-button active" type="button">目次</button>
-        <button id="cardViewButton" class="toggle-button" type="button">カード</button>
+        <button id="tocViewButton" class="toggle-button active" type="button" aria-label="目次表示">
+          <span class="toggle-icon list-icon" aria-hidden="true"></span>
+        </button>
+        <button id="cardViewButton" class="toggle-button" type="button" aria-label="カード表示">
+          <span class="toggle-icon grid-icon" aria-hidden="true"></span>
+        </button>
       </div>
       <button id="randomButton" class="primary-button compact-button" type="button">一枚引く</button>
-      <div class="app-brand" aria-label="古今こだま集">
-        <strong>古今こだま集</strong>
-        <span>聞いたことある言葉の、出どころと背景</span>
-      </div>
       <button id="openFilterButton" class="icon-button" type="button" aria-label="検索条件を開く">☰</button>
     </header>
 
