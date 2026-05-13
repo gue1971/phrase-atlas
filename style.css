@@ -500,8 +500,8 @@ button:focus-visible {
   display: flex;
   flex-direction: column;
   width: min(760px, 100%);
-  height: min(880px, calc(100vh - 36px));
-  max-height: calc(100vh - 36px);
+  height: min(880px, calc(100dvh - 36px));
+  max-height: calc(100dvh - 36px);
   overflow: hidden;
   padding: 0;
   background: var(--surface);
@@ -517,13 +517,8 @@ button:focus-visible {
 }
 
 .close-button {
-  position: absolute;
-  top: 0;
-  right: 0;
-  z-index: 4;
   width: 42px;
   height: 42px;
-  margin: 16px;
   color: var(--text);
   background: var(--surface-strong);
   border: 1px solid var(--line);
@@ -537,9 +532,25 @@ button:focus-visible {
   top: 0;
   z-index: 3;
   flex: 0 0 auto;
-  padding: 18px 72px 14px 20px;
+  padding: 18px 20px 14px;
   background: var(--surface);
   border-bottom: 1px solid var(--line);
+}
+
+.detail-kicker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.detail-kicker .eyebrow {
+  margin: 0;
+}
+
+.detail-kicker .stars {
+  flex: 0 0 auto;
 }
 
 .detail-header h2 {
@@ -577,6 +588,8 @@ button:focus-visible {
 .detail-footer {
   flex: 0 0 auto;
   display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
   gap: 10px;
   padding: 12px 20px 16px;
   background: var(--surface);
@@ -728,12 +741,12 @@ button:focus-visible {
   }
 
   .detail-panel {
-    height: calc(100vh - 24px);
-    max-height: calc(100vh - 24px);
+    height: calc(100dvh - 16px);
+    max-height: calc(100dvh - 16px);
   }
 
   .detail-header {
-    padding: 16px 66px 12px 18px;
+    padding: 16px 18px 12px;
   }
 
   .detail-body {
@@ -741,6 +754,10 @@ button:focus-visible {
   }
 
   .detail-footer {
-    padding: 10px 18px 12px;
+    padding: 10px 12px 12px;
+  }
+
+  .detail-overlay {
+    padding: 8px;
   }
 }

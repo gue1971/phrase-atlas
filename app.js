@@ -33,7 +33,6 @@
     filterOverlay: document.querySelector("#filterOverlay"),
     detailOverlay: document.querySelector("#detailOverlay"),
     detailContent: document.querySelector("#detailContent"),
-    closeDetailButton: document.querySelector("#closeDetailButton"),
   };
 
   function loadRatings() {
@@ -183,7 +182,10 @@
     elements.detailContent.innerHTML = `
       <header class="detail-header">
         <div>
-          <p class="eyebrow">${escapeHtml(item.category)}</p>
+          <div class="detail-kicker">
+            <span class="eyebrow">${escapeHtml(item.category)}</span>
+            <span class="stars" aria-label="有名度 ${item.fame}">${"★".repeat(item.fame)}${"☆".repeat(5 - item.fame)}</span>
+          </div>
           <h2 id="detailTitle">${escapeHtml(item.phrase)}</h2>
           <p class="original">${escapeHtml(formatValue(item.original))}</p>
           <div class="detail-labels">
@@ -203,7 +205,6 @@
           ${detailRow("関連年", item.year)}
           ${detailRow("著作", item.work)}
           ${detailRow("分野", item.fields)}
-          ${detailRow("有名度", "★".repeat(item.fame))}
         </div>
 
         <section class="explanation-section">
@@ -223,12 +224,13 @@
             <button
               class="rating-button ${normalizeRating(state.ratings[item.id]) === level.value ? "active" : ""}"
               type="button"
-              data-action="rate"
+              data-action="rate-close"
               data-id="${escapeHtml(item.id)}"
               data-value="${level.value}"
             >${escapeHtml(level.label)}</button>
           `).join("")}
         </div>
+        <button id="closeDetailButton" class="close-button" type="button" data-action="close-detail" aria-label="詳細を閉じる">×</button>
       </footer>
     `;
   }
@@ -349,9 +351,13 @@
       const id = actionTarget.dataset.id;
       if (action === "open") openDetail(id);
       if (action === "rate") setRating(id, actionTarget.dataset.value);
+      if (action === "rate-close") {
+        setRating(id, actionTarget.dataset.value);
+        closeDetail();
+      }
+      if (action === "close-detail") closeDetail();
     });
 
-    elements.closeDetailButton.addEventListener("click", closeDetail);
     elements.detailOverlay.addEventListener("click", (event) => {
       if (event.target === elements.detailOverlay) closeDetail();
     });
