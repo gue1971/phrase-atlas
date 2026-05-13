@@ -51,7 +51,7 @@ button {
   left: 0;
   z-index: 15;
   display: grid;
-  grid-template-columns: auto auto 1fr;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
   padding: 9px 16px;
@@ -60,8 +60,21 @@ button {
   backdrop-filter: blur(12px);
 }
 
-.top-bar .icon-button {
+.header-title {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 1.05rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.header-actions {
+  display: inline-flex;
   justify-self: end;
+  gap: 8px;
 }
 
 .controls {
@@ -251,6 +264,32 @@ button:focus-visible {
   line-height: 1;
 }
 
+.random-button {
+  color: var(--accent);
+}
+
+.random-icon {
+  position: relative;
+  display: block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid currentColor;
+  border-radius: 5px;
+  transform: rotate(-8deg);
+}
+
+.random-icon::before {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 3px;
+  height: 3px;
+  background: currentColor;
+  border-radius: 50%;
+  box-shadow: 8px 0 0 currentColor, 4px 4px 0 currentColor, 0 8px 0 currentColor, 8px 8px 0 currentColor;
+  content: "";
+}
+
 .toc-list {
   display: grid;
   gap: 8px;
@@ -313,8 +352,26 @@ button:focus-visible {
   min-width: 48px;
   padding: 3px 8px;
   text-align: center;
-  background: var(--accent-soft);
+  border: 1px solid transparent;
   border-radius: 999px;
+}
+
+.toc-rating.rating-unread {
+  color: #66717e;
+  background: #eef2f4;
+  border-color: #dfe5ea;
+}
+
+.toc-rating.rating-read {
+  color: #315f72;
+  background: #e5f1f4;
+  border-color: #c8e0e7;
+}
+
+.toc-rating.rating-settled {
+  color: #2f6f5e;
+  background: #e6f3ed;
+  border-color: #c8e5d8;
 }
 
 .card-list {
@@ -693,17 +750,18 @@ button:focus-visible {
   }
 
   .top-bar {
-    grid-template-columns: auto auto 1fr;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     gap: 7px;
     padding: 9px 10px;
   }
 
-  .toggle-button {
-    width: 40px;
+  .header-title {
+    font-size: 0.98rem;
+    letter-spacing: 0.02em;
   }
 
-  .compact-button {
-    padding: 8px 13px;
+  .toggle-button {
+    width: 40px;
   }
 
   .controls {

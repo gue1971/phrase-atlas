@@ -138,6 +138,7 @@
   }
 
   function renderTocItem(item) {
+    const rating = normalizeRating(state.ratings[item.id]);
     return `
       <article class="toc-item" data-id="${escapeHtml(item.id)}">
         <button class="toc-main" type="button" data-action="open" data-id="${escapeHtml(item.id)}">
@@ -145,7 +146,7 @@
           <span class="toc-sub">${escapeHtml(item.person)}${item.year ? ` / ${escapeHtml(formatValue(item.year))}` : ""}</span>
         </button>
         <span class="toc-category">${escapeHtml(item.category)}</span>
-        <span class="toc-rating">${escapeHtml(getRatingLabel(item.id))}</span>
+        <span class="toc-rating rating-${escapeHtml(rating)}">${escapeHtml(getRatingLabel(item.id))}</span>
       </article>
     `;
   }
