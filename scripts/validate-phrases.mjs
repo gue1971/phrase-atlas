@@ -38,6 +38,7 @@ const required = [
 ];
 
 const ids = new Set();
+const phraseIds = new Map();
 const problems = [];
 const explanationLengths = [];
 
@@ -57,6 +58,14 @@ if (!Array.isArray(phrases)) {
       problems.push(`${label}: duplicate id`);
     }
     ids.add(item.id);
+
+    if (typeof item.phrase === "string") {
+      const existingId = phraseIds.get(item.phrase);
+      if (existingId) {
+        problems.push(`${label}: duplicate phrase "${item.phrase}" also used by ${existingId}`);
+      }
+      phraseIds.set(item.phrase, item.id);
+    }
 
     if (!/^[a-z0-9_]+$/.test(item.id)) {
       problems.push(`${label}: id must be snake_case ascii`);
