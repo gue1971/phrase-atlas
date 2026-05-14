@@ -113,6 +113,18 @@
     });
   }
 
+  function getRandomPhrases() {
+    const query = state.query.trim().toLowerCase();
+    const scoped = PHRASES.filter((item) => {
+      const matchesQuery = !query || getSearchText(item).includes(query);
+      const matchesCategory = state.category === "all" || item.category === state.category;
+      return matchesQuery && matchesCategory;
+    });
+    const source = scoped.length ? scoped : PHRASES;
+    const unread = source.filter((item) => normalizeRating(state.ratings[item.id]) === "unread");
+    return unread.length ? unread : source;
+  }
+
   function getRelatedPhrases(item, limit = 5) {
     const itemFields = new Set(item.fields);
     const itemTags = new Set(item.tags);
@@ -359,8 +371,7 @@
     });
 
     elements.randomButton.addEventListener("click", () => {
-      const list = getFilteredPhrases();
-      const source = list.length ? list : PHRASES;
+      const source = getRandomPhrases();
       const randomItem = source[Math.floor(Math.random() * source.length)];
       openDetail(randomItem.id);
     });
