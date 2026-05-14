@@ -269,8 +269,11 @@
         <div class="related-list">
           ${items.map((item) => `
             <button class="related-link" type="button" data-action="open" data-id="${escapeHtml(item.id)}">
-              <span>${escapeHtml(item.phrase)}</span>
+              <span class="related-title">${escapeHtml(item.phrase)}</span>
               <small>${escapeHtml(item.category)} / ${escapeHtml(item.person)}</small>
+              <span class="related-rating rating-${escapeHtml(normalizeRating(state.ratings[item.id]))}">
+                ${escapeHtml(getRatingLabel(item.id))}
+              </span>
             </button>
           `).join("")}
         </div>

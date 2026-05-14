@@ -738,8 +738,10 @@ button:focus-visible {
 }
 
 .related-link {
+  position: relative;
   display: grid;
-  gap: 3px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 3px 8px;
   min-height: 58px;
   padding: 10px 11px;
   color: var(--text);
@@ -754,18 +756,44 @@ button:focus-visible {
   box-shadow: 0 8px 20px rgba(31, 41, 51, 0.07);
 }
 
-.related-link span {
+.related-title {
   font-weight: 800;
   line-height: 1.3;
 }
 
 .related-link small {
+  grid-column: 1 / 2;
   overflow: hidden;
   color: var(--muted);
   font-size: 0.78rem;
   font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.related-rating {
+  grid-row: 1 / 3;
+  grid-column: 2 / 3;
+  align-self: center;
+  min-width: 42px;
+  padding: 4px 7px;
+  color: #4b5563;
+  text-align: center;
+  background: var(--surface-strong);
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.related-rating.rating-read {
+  color: #6b4f08;
+  background: #fff1c6;
+}
+
+.related-rating.rating-settled {
+  color: #1f5b45;
+  background: #dff3e8;
 }
 
 .tag-list {
