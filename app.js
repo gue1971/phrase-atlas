@@ -305,7 +305,7 @@
   function detailPersonRow(item) {
     return `
       <div class="detail-row person-detail">
-        <dt>人物</dt>
+        <dt>人物・由来</dt>
         <dd>
           <span>${escapeHtml(formatValue(item.person))}</span>
           <small>${escapeHtml(formatValue(item.person_en))}</small>
