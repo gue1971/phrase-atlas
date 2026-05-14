@@ -32,6 +32,12 @@ node scripts/validate-phrases.mjs
 
 必須項目、ID重複、カテゴリ、status、fame、解説文の最低文字数をチェックします。
 
+300件などの節目では、以下でカテゴリ分布や説明文量も確認します。
+
+```bash
+node scripts/audit-phrases.mjs
+```
+
 ## データを追加する場所
 
 カードデータは [phrases.js](/Users/gue1971/MyWorks/ブック・ノート/phrase-atlas/phrases.js) の `PHRASES` 配列に追加します。
