@@ -113,6 +113,29 @@
     });
   }
 
+  function getRelatedPhrases(item, limit = 5) {
+    const itemFields = new Set(item.fields);
+    const itemTags = new Set(item.tags);
+
+    return PHRASES.filter((candidate) => candidate.id !== item.id)
+      .map((candidate) => {
+        let score = 0;
+        if (candidate.category === item.category) score += 2;
+        if (candidate.person === item.person) score += 4;
+        if (candidate.work && candidate.work === item.work) score += 3;
+        for (const field of candidate.fields) {
+          if (itemFields.has(field)) score += 3;
+        }
+        for (const tag of candidate.tags) {
+          if (itemTags.has(tag)) score += 2;
+        }
+        return { ...candidate, relatedScore: score };
+      })
+      .filter((candidate) => candidate.relatedScore > 2)
+      .sort((a, b) => b.relatedScore - a.relatedScore || b.fame - a.fame || a.phrase.localeCompare(b.phrase, "ja"))
+      .slice(0, limit);
+  }
+
   function renderSelectOptions() {
     const categories = [...new Set(PHRASES.map((item) => item.category))].sort((a, b) => a.localeCompare(b, "ja"));
     elements.categoryFilter.innerHTML = [
@@ -180,6 +203,7 @@
   }
 
   function renderDetail(item) {
+    const related = getRelatedPhrases(item);
     elements.detailContent.innerHTML = `
       <header class="detail-header">
         <div>
@@ -217,6 +241,8 @@
           <h3>注意・補足</h3>
           <p>${escapeHtml(item.note)}</p>
         </section>
+
+        ${related.length ? renderRelatedSection(related) : ""}
       </div>
 
       <footer class="detail-footer">
@@ -233,6 +259,22 @@
         </div>
         <button id="closeDetailButton" class="close-button" type="button" data-action="close-detail" aria-label="詳細を閉じる">×</button>
       </footer>
+    `;
+  }
+
+  function renderRelatedSection(items) {
+    return `
+      <section class="related-section" aria-label="関連語">
+        <h3>関連語</h3>
+        <div class="related-list">
+          ${items.map((item) => `
+            <button class="related-link" type="button" data-action="open" data-id="${escapeHtml(item.id)}">
+              <span>${escapeHtml(item.phrase)}</span>
+              <small>${escapeHtml(item.category)} / ${escapeHtml(item.person)}</small>
+            </button>
+          `).join("")}
+        </div>
+      </section>
     `;
   }
 
@@ -264,7 +306,8 @@
     renderDetail(item);
     elements.detailOverlay.hidden = false;
     document.body.classList.add("modal-open");
-    elements.closeDetailButton.focus();
+    elements.detailContent.querySelector(".detail-body")?.scrollTo({ top: 0 });
+    document.querySelector("#closeDetailButton")?.focus();
   }
 
   function openFilter() {

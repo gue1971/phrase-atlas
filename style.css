@@ -723,6 +723,51 @@ button:focus-visible {
   border-radius: 8px;
 }
 
+.related-section {
+  margin-top: 14px;
+  padding: 16px;
+  background: #fbfaf7;
+  border: 1px solid #e8dfcf;
+  border-radius: 8px;
+}
+
+.related-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.related-link {
+  display: grid;
+  gap: 3px;
+  min-height: 58px;
+  padding: 10px 11px;
+  color: var(--text);
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.related-link:hover {
+  border-color: #c7b58d;
+  box-shadow: 0 8px 20px rgba(31, 41, 51, 0.07);
+}
+
+.related-link span {
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.related-link small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .tag-list {
   display: flex;
   flex-wrap: wrap;
@@ -817,5 +862,9 @@ button:focus-visible {
 
   .detail-overlay {
     padding: 8px;
+  }
+
+  .related-list {
+    grid-template-columns: 1fr;
   }
 }
