@@ -23,9 +23,7 @@
     searchInput: document.querySelector("#searchInput"),
     categoryFilter: document.querySelector("#categoryFilter"),
     knowledgeFilter: document.querySelector("#knowledgeFilter"),
-    bookmarkOnlyFilter: document.querySelector("#bookmarkOnlyFilter"),
-    sortSelect: document.querySelector("#sortSelect"),
-    randomButton: document.querySelector("#randomButton"),
+    bookmarkToggleButton: document.querySelector("#bookmarkToggleButton"),
     resetButton: document.querySelector("#resetButton"),
     openFilterButton: document.querySelector("#openFilterButton"),
     closeFilterButton: document.querySelector("#closeFilterButton"),
@@ -134,18 +132,6 @@
     });
   }
 
-  function getRandomPhrases() {
-    const query = state.query.trim().toLowerCase();
-    const scoped = PHRASES.filter((item) => {
-      const matchesQuery = !query || getSearchText(item).includes(query);
-      const matchesCategory = state.category === "all" || item.category === state.category;
-      return matchesQuery && matchesCategory;
-    });
-    const source = scoped.length ? scoped : PHRASES;
-    const unread = source.filter((item) => normalizeRating(state.ratings[item.id]) === "unread");
-    return unread.length ? unread : source;
-  }
-
   function getRelatedPhrases(item, limit = 7) {
     const itemFields = new Set(item.fields);
     const itemTags = new Set(item.tags);
@@ -195,8 +181,18 @@
     elements.cardList.hidden = state.view !== "card";
     elements.tocViewButton.classList.toggle("active", state.view === "toc");
     elements.cardViewButton.classList.toggle("active", state.view === "card");
+    renderBookmarkToggle();
     elements.tocList.innerHTML = filtered.map(renderTocItem).join("");
     elements.cardList.innerHTML = filtered.map(renderCard).join("");
+  }
+
+  function renderBookmarkToggle() {
+    const button = elements.bookmarkToggleButton;
+    const icon = button.querySelector(".bookmark-toggle-icon");
+    button.classList.toggle("active", state.bookmarkOnly);
+    button.setAttribute("aria-pressed", String(state.bookmarkOnly));
+    button.setAttribute("aria-label", state.bookmarkOnly ? "すべて表示" : "ブックマークのみ表示");
+    icon.textContent = state.bookmarkOnly ? "★" : "☆";
   }
 
   function renderTocItem(item) {
@@ -209,7 +205,6 @@
         </button>
         <span class="toc-category">${escapeHtml(item.category)}</span>
         <span class="toc-rating rating-${escapeHtml(rating)}">${escapeHtml(getRatingLabel(item.id))}</span>
-        ${bookmarkButton(item)}
       </article>
     `;
   }
@@ -227,20 +222,6 @@
           <span class="person-line">${escapeHtml(item.person)}${item.year ? ` / ${escapeHtml(formatValue(item.year))}` : ""}</span>
           <span class="summary-line">${escapeHtml(summary)}</span>
         </button>
-        <div class="card-tools">
-          ${bookmarkButton(item)}
-        </div>
-        <div class="rating-row" aria-label="${escapeHtml(item.phrase)}の知ってる度">
-          ${KNOWLEDGE_LEVELS.map((level) => `
-            <button
-              class="rating-button ${normalizeRating(state.ratings[item.id]) === level.value ? "active" : ""}"
-              type="button"
-              data-action="rate"
-              data-id="${escapeHtml(item.id)}"
-              data-value="${level.value}"
-            >${escapeHtml(level.label)}</button>
-          `).join("")}
-        </div>
       </article>
     `;
   }
@@ -332,8 +313,8 @@
             </button>
           `).join("")}
           <button class="related-link related-random" type="button" data-action="open-random-unread" data-exclude-id="${escapeHtml(currentId)}">
-            <span class="related-title">未読を一枚</span>
-            <small>新しいことばへ広げる</small>
+            <span class="related-title">次のカルテ</span>
+            <small>まだ読んでいないことば</small>
             <span class="related-rating rating-unread">未読</span>
           </button>
         </div>
@@ -427,20 +408,9 @@
       renderCards();
     });
 
-    elements.bookmarkOnlyFilter.addEventListener("change", (event) => {
-      state.bookmarkOnly = event.target.checked;
+    elements.bookmarkToggleButton.addEventListener("click", () => {
+      state.bookmarkOnly = !state.bookmarkOnly;
       renderCards();
-    });
-
-    elements.sortSelect.addEventListener("change", (event) => {
-      state.sort = event.target.value;
-      renderCards();
-    });
-
-    elements.randomButton.addEventListener("click", () => {
-      const source = getRandomPhrases();
-      const randomItem = source[Math.floor(Math.random() * source.length)];
-      openDetail(randomItem.id);
     });
 
     elements.resetButton.addEventListener("click", () => {
@@ -453,8 +423,6 @@
       elements.searchInput.value = "";
       elements.categoryFilter.value = "all";
       elements.knowledgeFilter.value = "all";
-      elements.bookmarkOnlyFilter.checked = false;
-      elements.sortSelect.value = "fame";
       renderCards();
     });
 

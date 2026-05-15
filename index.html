@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ことばカルテ</title>
-    <link rel="stylesheet" href="./style.css?v=20260515-footer-bookmark" />
+    <link rel="stylesheet" href="./style.css?v=20260515-bookmark-filter" />
   </head>
   <body>
     <header class="top-bar">
@@ -18,10 +18,12 @@
       </div>
       <div class="header-title" aria-hidden="true">ことばカルテ</div>
       <div class="header-actions">
-        <button id="randomButton" class="icon-button random-button" type="button" aria-label="一枚引く">
-          <span class="random-icon" aria-hidden="true"></span>
+        <button id="bookmarkToggleButton" class="icon-button bookmark-toggle-button" type="button" aria-label="ブックマークのみ表示" aria-pressed="false">
+          <span class="bookmark-toggle-icon" aria-hidden="true">☆</span>
         </button>
-        <button id="openFilterButton" class="icon-button" type="button" aria-label="検索条件を開く">☰</button>
+        <button id="openFilterButton" class="icon-button" type="button" aria-label="検索条件を開く">
+          <span class="search-icon" aria-hidden="true"></span>
+        </button>
       </div>
     </header>
 
@@ -55,20 +57,7 @@
               <span>進捗</span>
               <select id="knowledgeFilter"></select>
             </label>
-            <label>
-              <span>並び替え</span>
-              <select id="sortSelect">
-                <option value="fame">有名度順</option>
-                <option value="year">年代順</option>
-                <option value="person">人物・由来順</option>
-              </select>
-            </label>
           </div>
-
-          <label class="bookmark-filter">
-            <input id="bookmarkOnlyFilter" type="checkbox" />
-            <span>ブックマークのみ</span>
-          </label>
 
           <div class="control-actions">
             <button id="resetButton" class="ghost-button" type="button">条件をリセット</button>
@@ -84,6 +73,6 @@
     </div>
 
     <script src="./phrases.js?v=20260514-500"></script>
-    <script src="./app.js?v=20260515-footer-bookmark"></script>
+    <script src="./app.js?v=20260515-bookmark-filter"></script>
   </body>
 </html>
