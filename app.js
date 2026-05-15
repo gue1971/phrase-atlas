@@ -23,6 +23,8 @@
     searchInput: document.querySelector("#searchInput"),
     categoryFilter: document.querySelector("#categoryFilter"),
     knowledgeFilter: document.querySelector("#knowledgeFilter"),
+    headerTitle: document.querySelector("#headerTitle"),
+    headerActions: document.querySelector("#headerActions"),
     bookmarkToggleButton: document.querySelector("#bookmarkToggleButton"),
     resetButton: document.querySelector("#resetButton"),
     openFilterButton: document.querySelector("#openFilterButton"),
@@ -187,9 +189,23 @@
     elements.cardList.hidden = state.view !== "card";
     elements.tocViewButton.classList.toggle("active", state.view === "toc");
     elements.cardViewButton.classList.toggle("active", state.view === "card");
+    renderHeaderState();
     renderBookmarkToggle();
     elements.tocList.innerHTML = filtered.map(renderTocItem).join("");
     elements.cardList.innerHTML = filtered.map(renderCard).join("");
+  }
+
+  function renderHeaderState() {
+    const titles = {
+      detail: "ことばカルテ",
+      toc: "目次",
+      card: "カルテ一覧",
+    };
+    elements.headerTitle.textContent = titles[state.view] || "ことばカルテ";
+    elements.headerActions.classList.toggle("is-hidden", state.view === "detail");
+    elements.headerActions.setAttribute("aria-hidden", String(state.view === "detail"));
+    elements.headerActions.inert = state.view === "detail";
+    document.body.classList.toggle("view-detail", state.view === "detail");
   }
 
   function renderBookmarkToggle() {
