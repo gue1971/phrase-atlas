@@ -34,6 +34,28 @@ select {
   font: inherit;
 }
 
+.bookmark-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  color: var(--text);
+  font-weight: 800;
+}
+
+.bookmark-filter input {
+  width: 20px;
+  min-height: 20px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.bookmark-filter span {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
 button {
   cursor: pointer;
 }
@@ -302,7 +324,7 @@ button:focus-visible {
 
 .toc-item {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
   align-items: center;
   gap: 10px;
   padding: 9px 12px;
@@ -374,6 +396,27 @@ button:focus-visible {
   border-color: #c8e5d8;
 }
 
+.bookmark-button {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  color: #9a7942;
+  background: #fffaf0;
+  border: 1px solid #ead7b2;
+  border-radius: 999px;
+  font-size: 1.08rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.bookmark-button.active {
+  color: #fff;
+  background: var(--gold);
+  border-color: var(--gold);
+  box-shadow: 0 7px 18px rgba(183, 121, 31, 0.22);
+}
+
 .card-list {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -381,11 +424,18 @@ button:focus-visible {
 }
 
 .phrase-card {
+  position: relative;
   overflow: hidden;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 8px;
   box-shadow: 0 10px 26px rgba(31, 41, 51, 0.06);
+}
+
+.card-tools {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 12px 10px;
 }
 
 .card-main {
@@ -588,6 +638,10 @@ button:focus-visible {
   position: sticky;
   top: 0;
   z-index: 3;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
   flex: 0 0 auto;
   padding: 18px 20px 14px;
   background: var(--surface);
@@ -635,6 +689,10 @@ button:focus-visible {
   background: #e9f4ef;
 }
 
+.detail-header .bookmark-button {
+  margin-top: 2px;
+}
+
 .detail-body {
   flex: 1 1 auto;
   min-height: 0;
@@ -654,13 +712,13 @@ button:focus-visible {
 }
 
 .detail-summary {
+  margin: 10px 0 0;
   padding: 16px;
   background: #fbfaf7;
   border: 1px solid #ece6d9;
   border-radius: 8px;
 }
 
-.detail-summary p,
 .explanation-section p,
 .note-section p {
   margin: 0;
@@ -791,6 +849,15 @@ button:focus-visible {
   background: #fff1c6;
 }
 
+.related-random {
+  background: #f7fbfc;
+  border-color: #cfe3e9;
+}
+
+.related-random .related-title {
+  color: var(--accent-dark);
+}
+
 .related-rating.rating-settled {
   color: #1f5b45;
   background: #dff3e8;
@@ -860,7 +927,7 @@ button:focus-visible {
   }
 
   .toc-item {
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) auto auto;
   }
 
   .toc-item .toc-category {

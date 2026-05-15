@@ -5,21 +5,25 @@
     { value: "settled", label: "定着" },
   ];
   const STORAGE_KEY = "phrase-atlas-knowledge";
+  const BOOKMARK_STORAGE_KEY = "phrase-atlas-bookmarks";
 
   const state = {
     query: "",
     category: "all",
     knowledge: "all",
+    bookmarkOnly: false,
     sort: "fame",
     view: "toc",
     selectedPhrase: null,
     ratings: loadRatings(),
+    bookmarks: loadBookmarks(),
   };
 
   const elements = {
     searchInput: document.querySelector("#searchInput"),
     categoryFilter: document.querySelector("#categoryFilter"),
     knowledgeFilter: document.querySelector("#knowledgeFilter"),
+    bookmarkOnlyFilter: document.querySelector("#bookmarkOnlyFilter"),
     sortSelect: document.querySelector("#sortSelect"),
     randomButton: document.querySelector("#randomButton"),
     resetButton: document.querySelector("#resetButton"),
@@ -45,6 +49,18 @@
 
   function saveRatings() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state.ratings));
+  }
+
+  function loadBookmarks() {
+    try {
+      return JSON.parse(localStorage.getItem(BOOKMARK_STORAGE_KEY)) || {};
+    } catch {
+      return {};
+    }
+  }
+
+  function saveBookmarks() {
+    localStorage.setItem(BOOKMARK_STORAGE_KEY, JSON.stringify(state.bookmarks));
   }
 
   function escapeHtml(value) {
@@ -92,6 +108,10 @@
       .toLowerCase();
   }
 
+  function isBookmarked(id) {
+    return Boolean(state.bookmarks[id]);
+  }
+
   function getFilteredPhrases() {
     const query = state.query.trim().toLowerCase();
     return PHRASES.filter((item) => {
@@ -99,7 +119,8 @@
       const matchesCategory = state.category === "all" || item.category === state.category;
       const currentRating = normalizeRating(state.ratings[item.id]);
       const matchesKnowledge = state.knowledge === "all" || currentRating === state.knowledge;
-      return matchesQuery && matchesCategory && matchesKnowledge;
+      const matchesBookmark = !state.bookmarkOnly || isBookmarked(item.id);
+      return matchesQuery && matchesCategory && matchesKnowledge && matchesBookmark;
     }).sort((a, b) => {
       if (state.sort === "year") {
         const yearA = a.year ?? 99999;
@@ -125,7 +146,7 @@
     return unread.length ? unread : source;
   }
 
-  function getRelatedPhrases(item, limit = 5) {
+  function getRelatedPhrases(item, limit = 7) {
     const itemFields = new Set(item.fields);
     const itemTags = new Set(item.tags);
 
@@ -146,6 +167,12 @@
       .filter((candidate) => candidate.relatedScore > 2)
       .sort((a, b) => b.relatedScore - a.relatedScore || b.fame - a.fame || a.phrase.localeCompare(b.phrase, "ja"))
       .slice(0, limit);
+  }
+
+  function getUnreadRandomItem(excludeId) {
+    const unread = PHRASES.filter((item) => item.id !== excludeId && normalizeRating(state.ratings[item.id]) === "unread");
+    const source = unread.length ? unread : PHRASES.filter((item) => item.id !== excludeId);
+    return source[Math.floor(Math.random() * source.length)];
   }
 
   function renderSelectOptions() {
@@ -182,6 +209,7 @@
         </button>
         <span class="toc-category">${escapeHtml(item.category)}</span>
         <span class="toc-rating rating-${escapeHtml(rating)}">${escapeHtml(getRatingLabel(item.id))}</span>
+        ${bookmarkButton(item)}
       </article>
     `;
   }
@@ -199,6 +227,9 @@
           <span class="person-line">${escapeHtml(item.person)}${item.year ? ` / ${escapeHtml(formatValue(item.year))}` : ""}</span>
           <span class="summary-line">${escapeHtml(summary)}</span>
         </button>
+        <div class="card-tools">
+          ${bookmarkButton(item)}
+        </div>
         <div class="rating-row" aria-label="${escapeHtml(item.phrase)}の知ってる度">
           ${KNOWLEDGE_LEVELS.map((level) => `
             <button
@@ -211,6 +242,20 @@
           `).join("")}
         </div>
       </article>
+    `;
+  }
+
+  function bookmarkButton(item) {
+    const active = isBookmarked(item.id);
+    return `
+      <button
+        class="bookmark-button ${active ? "active" : ""}"
+        type="button"
+        data-action="bookmark"
+        data-id="${escapeHtml(item.id)}"
+        aria-label="${escapeHtml(item.phrase)}をブックマーク${active ? "解除" : ""}"
+        aria-pressed="${active}"
+      >${active ? "★" : "☆"}</button>
     `;
   }
 
@@ -229,14 +274,12 @@
             <span class="status-badge status-${escapeHtml(item.status)}">${escapeHtml(item.status)}</span>
             ${item.tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join("")}
           </div>
+          <p class="detail-summary">${escapeHtml(item.summary)}</p>
         </div>
+        ${bookmarkButton(item)}
       </header>
 
       <div class="detail-body">
-        <div class="detail-summary">
-          <p>${escapeHtml(item.summary)}</p>
-        </div>
-
         <div class="detail-grid">
           ${detailPersonRow(item)}
           ${detailRow("関連年", item.year)}
@@ -254,7 +297,7 @@
           <p>${escapeHtml(item.note)}</p>
         </section>
 
-        ${related.length ? renderRelatedSection(related) : ""}
+        ${renderRelatedSection(related, item.id)}
       </div>
 
       <footer class="detail-footer">
@@ -274,7 +317,7 @@
     `;
   }
 
-  function renderRelatedSection(items) {
+  function renderRelatedSection(items, currentId) {
     return `
       <section class="related-section" aria-label="関連語">
         <h3>関連語</h3>
@@ -288,6 +331,11 @@
               </span>
             </button>
           `).join("")}
+          <button class="related-link related-random" type="button" data-action="open-random-unread" data-exclude-id="${escapeHtml(currentId)}">
+            <span class="related-title">未読を一枚</span>
+            <small>新しいことばへ広げる</small>
+            <span class="related-rating rating-unread">未読</span>
+          </button>
         </div>
       </section>
     `;
@@ -328,7 +376,10 @@
   function openFilter() {
     elements.filterOverlay.hidden = false;
     document.body.classList.add("modal-open");
-    elements.closeFilterButton.focus();
+    requestAnimationFrame(() => {
+      elements.searchInput.focus();
+      elements.searchInput.select();
+    });
   }
 
   function closeFilter() {
@@ -349,6 +400,17 @@
     if (state.selectedPhrase?.id === id) renderDetail(state.selectedPhrase);
   }
 
+  function toggleBookmark(id) {
+    if (isBookmarked(id)) {
+      delete state.bookmarks[id];
+    } else {
+      state.bookmarks[id] = true;
+    }
+    saveBookmarks();
+    renderCards();
+    if (state.selectedPhrase?.id === id) renderDetail(state.selectedPhrase);
+  }
+
   function bindEvents() {
     elements.searchInput.addEventListener("input", (event) => {
       state.query = event.target.value;
@@ -362,6 +424,11 @@
 
     elements.knowledgeFilter.addEventListener("change", (event) => {
       state.knowledge = event.target.value;
+      renderCards();
+    });
+
+    elements.bookmarkOnlyFilter.addEventListener("change", (event) => {
+      state.bookmarkOnly = event.target.checked;
       renderCards();
     });
 
@@ -380,11 +447,13 @@
       state.query = "";
       state.category = "all";
       state.knowledge = "all";
+      state.bookmarkOnly = false;
       state.sort = "fame";
       state.view = "toc";
       elements.searchInput.value = "";
       elements.categoryFilter.value = "all";
       elements.knowledgeFilter.value = "all";
+      elements.bookmarkOnlyFilter.checked = false;
       elements.sortSelect.value = "fame";
       renderCards();
     });
@@ -409,6 +478,11 @@
       const id = actionTarget.dataset.id;
       if (action === "open") openDetail(id);
       if (action === "rate") setRating(id, actionTarget.dataset.value);
+      if (action === "bookmark") toggleBookmark(id);
+      if (action === "open-random-unread") {
+        const randomItem = getUnreadRandomItem(actionTarget.dataset.excludeId);
+        if (randomItem) openDetail(randomItem.id);
+      }
       if (action === "rate-close") {
         setRating(id, actionTarget.dataset.value);
         closeDetail();
