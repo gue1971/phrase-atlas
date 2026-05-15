@@ -13,7 +13,7 @@
     knowledge: "all",
     bookmarkOnly: false,
     sort: "fame",
-    view: "toc",
+    view: "detail",
     selectedPhrase: null,
     ratings: loadRatings(),
     bookmarks: loadBookmarks(),
@@ -161,6 +161,10 @@
     return source[Math.floor(Math.random() * source.length)];
   }
 
+  function getInitialPhrase() {
+    return getUnreadRandomItem();
+  }
+
   function renderSelectOptions() {
     const categories = [...new Set(PHRASES.map((item) => item.category))].sort((a, b) => a.localeCompare(b, "ja"));
     elements.categoryFilter.innerHTML = [
@@ -176,7 +180,9 @@
 
   function renderCards() {
     const filtered = getFilteredPhrases();
-    elements.emptyState.hidden = filtered.length > 0;
+    const isListView = state.view === "toc" || state.view === "card";
+    elements.emptyState.hidden = !isListView || filtered.length > 0;
+    elements.detailOverlay.hidden = state.view !== "detail";
     elements.tocList.hidden = state.view !== "toc";
     elements.cardList.hidden = state.view !== "card";
     elements.tocViewButton.classList.toggle("active", state.view === "toc");
@@ -293,7 +299,9 @@
             >${escapeHtml(level.label)}</button>
           `).join("")}
         </div>
-        <button id="closeDetailButton" class="close-button" type="button" data-action="close-detail" aria-label="詳細を閉じる">×</button>
+        <button id="closeDetailButton" class="close-button list-close-button" type="button" data-action="close-detail" aria-label="一覧へ戻る">
+          <span class="toggle-icon list-icon" aria-hidden="true"></span>
+        </button>
       </footer>
     `;
   }
@@ -347,11 +355,12 @@
     const item = PHRASES.find((phrase) => phrase.id === id);
     if (!item) return;
     state.selectedPhrase = item;
+    state.view = "detail";
     renderDetail(item);
     elements.detailOverlay.hidden = false;
-    document.body.classList.add("modal-open");
     elements.detailContent.querySelector(".detail-body")?.scrollTo({ top: 0 });
-    document.querySelector("#closeDetailButton")?.focus();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    renderCards();
   }
 
   function openFilter() {
@@ -370,8 +379,9 @@
 
   function closeDetail() {
     elements.detailOverlay.hidden = true;
-    document.body.classList.remove("modal-open");
     state.selectedPhrase = null;
+    state.view = "toc";
+    renderCards();
   }
 
   function setRating(id, value) {
@@ -420,6 +430,7 @@
       state.bookmarkOnly = false;
       state.sort = "fame";
       state.view = "toc";
+      state.selectedPhrase = null;
       elements.searchInput.value = "";
       elements.categoryFilter.value = "all";
       elements.knowledgeFilter.value = "all";
@@ -428,11 +439,13 @@
 
     elements.tocViewButton.addEventListener("click", () => {
       state.view = "toc";
+      state.selectedPhrase = null;
       renderCards();
     });
 
     elements.cardViewButton.addEventListener("click", () => {
       state.view = "card";
+      state.selectedPhrase = null;
       renderCards();
     });
 
@@ -453,24 +466,20 @@
       }
       if (action === "rate-close") {
         setRating(id, actionTarget.dataset.value);
-        closeDetail();
       }
       if (action === "close-detail") closeDetail();
     });
 
-    elements.detailOverlay.addEventListener("click", (event) => {
-      if (event.target === elements.detailOverlay) closeDetail();
-    });
     elements.filterOverlay.addEventListener("click", (event) => {
       if (event.target === elements.filterOverlay) closeFilter();
     });
     document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape" && !elements.detailOverlay.hidden) closeDetail();
       if (event.key === "Escape" && !elements.filterOverlay.hidden) closeFilter();
     });
   }
 
   renderSelectOptions();
   bindEvents();
+  openDetail(getInitialPhrase().id);
   renderCards();
 })();
