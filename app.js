@@ -14,6 +14,8 @@
     bookmarkOnly: false,
     sort: "fame",
     view: "detail",
+    lastListView: "toc",
+    lastDetailId: null,
     selectedPhrase: null,
     ratings: loadRatings(),
     bookmarks: loadBookmarks(),
@@ -29,8 +31,9 @@
     resetButton: document.querySelector("#resetButton"),
     openFilterButton: document.querySelector("#openFilterButton"),
     closeFilterButton: document.querySelector("#closeFilterButton"),
-    tocViewButton: document.querySelector("#tocViewButton"),
-    cardViewButton: document.querySelector("#cardViewButton"),
+    returnDetailButton: document.querySelector("#returnDetailButton"),
+    viewToggleButton: document.querySelector("#viewToggleButton"),
+    viewToggleIcon: document.querySelector("#viewToggleIcon"),
     tocList: document.querySelector("#tocList"),
     cardList: document.querySelector("#cardList"),
     emptyState: document.querySelector("#emptyState"),
@@ -187,8 +190,6 @@
     elements.detailOverlay.hidden = state.view !== "detail";
     elements.tocList.hidden = state.view !== "toc";
     elements.cardList.hidden = state.view !== "card";
-    elements.tocViewButton.classList.toggle("active", state.view === "toc");
-    elements.cardViewButton.classList.toggle("active", state.view === "card");
     renderHeaderState();
     renderBookmarkToggle();
     elements.tocList.innerHTML = filtered.map(renderTocItem).join("");
@@ -205,7 +206,22 @@
     elements.headerActions.classList.toggle("is-hidden", state.view === "detail");
     elements.headerActions.setAttribute("aria-hidden", String(state.view === "detail"));
     elements.headerActions.inert = state.view === "detail";
+    elements.returnDetailButton.hidden = state.view === "detail" || !state.lastDetailId;
+    elements.returnDetailButton.disabled = state.view === "detail" || !state.lastDetailId;
+    elements.viewToggleButton.setAttribute("aria-label", getViewToggleLabel());
+    elements.viewToggleIcon.className = `toggle-icon ${getViewToggleIconClass()}`;
     document.body.classList.toggle("view-detail", state.view === "detail");
+  }
+
+  function getViewToggleLabel() {
+    if (state.view === "detail") return "リスト表示へ";
+    if (state.view === "toc") return "カルテ一覧へ";
+    return "目次へ";
+  }
+
+  function getViewToggleIconClass() {
+    if (state.view === "toc") return "grid-icon";
+    return "list-icon";
   }
 
   function renderBookmarkToggle() {
@@ -370,7 +386,9 @@
   function openDetail(id) {
     const item = PHRASES.find((phrase) => phrase.id === id);
     if (!item) return;
+    if (state.view === "toc" || state.view === "card") state.lastListView = state.view;
     state.selectedPhrase = item;
+    state.lastDetailId = item.id;
     state.view = "detail";
     renderDetail(item);
     elements.detailOverlay.hidden = false;
@@ -396,7 +414,7 @@
   function closeDetail() {
     elements.detailOverlay.hidden = true;
     state.selectedPhrase = null;
-    state.view = "toc";
+    state.view = state.lastListView;
     renderCards();
   }
 
@@ -446,6 +464,7 @@
       state.bookmarkOnly = false;
       state.sort = "fame";
       state.view = "toc";
+      state.lastListView = "toc";
       state.selectedPhrase = null;
       elements.searchInput.value = "";
       elements.categoryFilter.value = "all";
@@ -453,16 +472,19 @@
       renderCards();
     });
 
-    elements.tocViewButton.addEventListener("click", () => {
-      state.view = "toc";
+    elements.viewToggleButton.addEventListener("click", () => {
+      if (state.view === "detail") {
+        closeDetail();
+        return;
+      }
+      state.view = state.view === "toc" ? "card" : "toc";
+      state.lastListView = state.view;
       state.selectedPhrase = null;
       renderCards();
     });
 
-    elements.cardViewButton.addEventListener("click", () => {
-      state.view = "card";
-      state.selectedPhrase = null;
-      renderCards();
+    elements.returnDetailButton.addEventListener("click", () => {
+      if (state.lastDetailId) openDetail(state.lastDetailId);
     });
 
     elements.openFilterButton.addEventListener("click", openFilter);

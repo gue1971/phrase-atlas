@@ -4,16 +4,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ことばカルテ</title>
-    <link rel="stylesheet" href="./style.css?v=20260515-reader-home" />
+    <link rel="stylesheet" href="./style.css?v=20260515-return-detail" />
   </head>
   <body>
     <header class="top-bar">
       <div class="view-toggle" aria-label="表示切替">
-        <button id="tocViewButton" class="toggle-button active" type="button" aria-label="目次表示">
-          <span class="toggle-icon list-icon" aria-hidden="true"></span>
+        <button id="returnDetailButton" class="toggle-button return-detail-button" type="button" aria-label="最後のカルテへ戻る" hidden>
+          <span class="toggle-icon return-icon" aria-hidden="true"></span>
         </button>
-        <button id="cardViewButton" class="toggle-button" type="button" aria-label="カード表示">
-          <span class="toggle-icon grid-icon" aria-hidden="true"></span>
+        <button id="viewToggleButton" class="toggle-button active" type="button" aria-label="リスト表示へ">
+          <span id="viewToggleIcon" class="toggle-icon list-icon" aria-hidden="true"></span>
         </button>
       </div>
       <div id="headerTitle" class="header-title" aria-hidden="true">ことばカルテ</div>
@@ -72,6 +72,6 @@
     </div>
 
     <script src="./phrases.js?v=20260514-500"></script>
-    <script src="./app.js?v=20260515-reader-home"></script>
+    <script src="./app.js?v=20260515-return-detail"></script>
   </body>
 </html>
