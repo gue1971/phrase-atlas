@@ -4,15 +4,15 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ことばカルテ</title>
-    <link rel="stylesheet" href="./style.css?v=20260515-return-detail" />
+    <link rel="stylesheet" href="./style.css?v=20260515-header-buttons" />
   </head>
   <body>
     <header class="top-bar">
-      <div class="view-toggle" aria-label="表示切替">
-        <button id="returnDetailButton" class="toggle-button return-detail-button" type="button" aria-label="最後のカルテへ戻る" hidden>
+      <div class="header-left" aria-label="表示切替">
+        <button id="returnDetailButton" class="icon-button nav-icon-button return-detail-button" type="button" aria-label="最後のカルテへ戻る" hidden>
           <span class="toggle-icon return-icon" aria-hidden="true"></span>
         </button>
-        <button id="viewToggleButton" class="toggle-button active" type="button" aria-label="リスト表示へ">
+        <button id="viewToggleButton" class="icon-button nav-icon-button" type="button" aria-label="リスト表示へ">
           <span id="viewToggleIcon" class="toggle-icon list-icon" aria-hidden="true"></span>
         </button>
       </div>
@@ -72,6 +72,6 @@
     </div>
 
     <script src="./phrases.js?v=20260514-500"></script>
-    <script src="./app.js?v=20260515-return-detail"></script>
+    <script src="./app.js?v=20260515-header-buttons"></script>
   </body>
 </html>
