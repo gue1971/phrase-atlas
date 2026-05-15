@@ -638,10 +638,6 @@ button:focus-visible {
   position: sticky;
   top: 0;
   z-index: 3;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: start;
-  gap: 12px;
   flex: 0 0 auto;
   padding: 18px 20px 14px;
   background: var(--surface);
@@ -689,10 +685,6 @@ button:focus-visible {
   background: #e9f4ef;
 }
 
-.detail-header .bookmark-button {
-  margin-top: 2px;
-}
-
 .detail-body {
   flex: 1 1 auto;
   min-height: 0;
@@ -703,7 +695,7 @@ button:focus-visible {
 .detail-footer {
   flex: 0 0 auto;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
   padding: 12px 20px 16px;

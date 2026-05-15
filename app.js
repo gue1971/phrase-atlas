@@ -276,7 +276,6 @@
           </div>
           <p class="detail-summary">${escapeHtml(item.summary)}</p>
         </div>
-        ${bookmarkButton(item)}
       </header>
 
       <div class="detail-body">
@@ -301,6 +300,7 @@
       </div>
 
       <footer class="detail-footer">
+        ${bookmarkButton(item)}
         <div class="rating-row detail-rating">
           ${KNOWLEDGE_LEVELS.map((level) => `
             <button
