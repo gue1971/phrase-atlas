@@ -10,20 +10,25 @@
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
-    <link rel="stylesheet" href="./style.css?v=20260515-header-buttons" />
+    <link rel="stylesheet" href="./style.css?v=20260517-detail-footer" />
   </head>
   <body>
     <header class="top-bar">
-      <div class="header-left" aria-label="表示切替">
+      <div id="headerTitle" class="header-title" aria-hidden="true">ことばカルテ</div>
+    </header>
+
+    <footer class="bottom-bar" aria-label="画面操作">
+      <div id="footerLeft" class="footer-actions footer-left"></div>
+      <div id="footerCenter" class="footer-center" hidden></div>
+      <div id="footerRight" class="footer-actions footer-right"></div>
+
+      <div id="footerControls" hidden>
         <button id="returnDetailButton" class="icon-button nav-icon-button return-detail-button" type="button" aria-label="最後のカルテへ戻る" hidden>
           <span class="toggle-icon return-icon" aria-hidden="true"></span>
         </button>
         <button id="viewToggleButton" class="icon-button nav-icon-button" type="button" aria-label="リスト表示へ">
           <span id="viewToggleIcon" class="toggle-icon list-icon" aria-hidden="true"></span>
         </button>
-      </div>
-      <div id="headerTitle" class="header-title" aria-hidden="true">ことばカルテ</div>
-      <div id="headerActions" class="header-actions">
         <button id="bookmarkToggleButton" class="icon-button bookmark-toggle-button" type="button" aria-label="ブックマークのみ表示" aria-pressed="false">
           <span class="bookmark-toggle-icon" aria-hidden="true">☆</span>
         </button>
@@ -31,7 +36,7 @@
           <span class="search-icon" aria-hidden="true"></span>
         </button>
       </div>
-    </header>
+    </footer>
 
     <div class="app-shell">
       <main>
@@ -50,7 +55,6 @@
       <section class="filter-panel" role="dialog" aria-modal="true" aria-labelledby="filterTitle">
         <div class="filter-panel-head">
           <h2 id="filterTitle">検索条件</h2>
-          <button id="closeFilterButton" class="icon-button" type="button" aria-label="検索条件を閉じる">×</button>
         </div>
 
         <div class="controls" aria-label="検索と絞り込み">
@@ -72,12 +76,13 @@
 
           <div class="control-actions">
             <button id="resetButton" class="ghost-button" type="button">条件をリセット</button>
+            <button id="applyFilterButton" class="primary-button" type="button">表示する</button>
           </div>
         </div>
       </section>
     </div>
 
     <script src="./phrases.js?v=20260517-520"></script>
-    <script src="./app.js?v=20260517-cachefix"></script>
+    <script src="./app.js?v=20260517-detail-footer"></script>
   </body>
 </html>

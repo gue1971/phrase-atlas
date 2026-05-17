@@ -26,11 +26,13 @@
     categoryFilter: document.querySelector("#categoryFilter"),
     knowledgeFilter: document.querySelector("#knowledgeFilter"),
     headerTitle: document.querySelector("#headerTitle"),
-    headerActions: document.querySelector("#headerActions"),
     bookmarkToggleButton: document.querySelector("#bookmarkToggleButton"),
     resetButton: document.querySelector("#resetButton"),
+    applyFilterButton: document.querySelector("#applyFilterButton"),
     openFilterButton: document.querySelector("#openFilterButton"),
-    closeFilterButton: document.querySelector("#closeFilterButton"),
+    footerLeft: document.querySelector("#footerLeft"),
+    footerCenter: document.querySelector("#footerCenter"),
+    footerRight: document.querySelector("#footerRight"),
     returnDetailButton: document.querySelector("#returnDetailButton"),
     viewToggleButton: document.querySelector("#viewToggleButton"),
     viewToggleIcon: document.querySelector("#viewToggleIcon"),
@@ -203,18 +205,14 @@
       card: "カルテ一覧",
     };
     elements.headerTitle.textContent = titles[state.view] || "ことばカルテ";
-    elements.headerActions.classList.toggle("is-hidden", state.view === "detail");
-    elements.headerActions.setAttribute("aria-hidden", String(state.view === "detail"));
-    elements.headerActions.inert = state.view === "detail";
-    elements.returnDetailButton.hidden = state.view === "detail" || !state.lastDetailId;
-    elements.returnDetailButton.disabled = state.view === "detail" || !state.lastDetailId;
     elements.viewToggleButton.setAttribute("aria-label", getViewToggleLabel());
     elements.viewToggleIcon.className = `toggle-icon ${getViewToggleIconClass()}`;
     document.body.classList.toggle("view-detail", state.view === "detail");
+    renderFooterState();
   }
 
   function getViewToggleLabel() {
-    if (state.view === "detail") return "リスト表示へ";
+    if (state.view === "detail") return "目次へ";
     if (state.view === "toc") return "カルテ一覧へ";
     return "目次へ";
   }
@@ -227,10 +225,54 @@
   function renderBookmarkToggle() {
     const button = elements.bookmarkToggleButton;
     const icon = button.querySelector(".bookmark-toggle-icon");
-    button.classList.toggle("active", state.bookmarkOnly);
-    button.setAttribute("aria-pressed", String(state.bookmarkOnly));
-    button.setAttribute("aria-label", state.bookmarkOnly ? "すべて表示" : "ブックマークのみ表示");
-    icon.textContent = state.bookmarkOnly ? "★" : "☆";
+    const detailId = state.selectedPhrase?.id;
+    const active = state.view === "detail" && detailId ? isBookmarked(detailId) : state.bookmarkOnly;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-pressed", String(active));
+    button.setAttribute(
+      "aria-label",
+      state.view === "detail"
+        ? `${state.selectedPhrase?.phrase || "このカルテ"}をブックマーク${active ? "解除" : ""}`
+        : active
+          ? "すべて表示"
+          : "ブックマークのみ表示"
+    );
+    icon.textContent = active ? "★" : "☆";
+  }
+
+  function renderFooterState() {
+    elements.footerLeft.replaceChildren();
+    elements.footerCenter.replaceChildren();
+    elements.footerRight.replaceChildren();
+
+    if (state.view === "detail") {
+      elements.footerLeft.append(elements.bookmarkToggleButton);
+      elements.footerCenter.hidden = false;
+      elements.footerCenter.innerHTML = `
+        <div class="rating-row footer-rating">
+          ${KNOWLEDGE_LEVELS.map((level) => `
+            <button
+              class="rating-button ${normalizeRating(state.ratings[state.selectedPhrase?.id]) === level.value ? "active" : ""}"
+              type="button"
+              data-action="rate"
+              data-id="${escapeHtml(state.selectedPhrase?.id)}"
+              data-value="${level.value}"
+            >${escapeHtml(level.label)}</button>
+          `).join("")}
+        </div>
+      `;
+      elements.footerRight.append(elements.viewToggleButton);
+      elements.returnDetailButton.hidden = true;
+      elements.openFilterButton.hidden = true;
+      return;
+    }
+
+    elements.footerCenter.hidden = true;
+    elements.returnDetailButton.hidden = !state.lastDetailId;
+    elements.returnDetailButton.disabled = !state.lastDetailId;
+    elements.openFilterButton.hidden = false;
+    elements.footerLeft.append(elements.returnDetailButton, elements.viewToggleButton);
+    elements.footerRight.append(elements.bookmarkToggleButton, elements.openFilterButton);
   }
 
   function renderTocItem(item) {
@@ -317,24 +359,6 @@
 
         ${renderRelatedSection(related, item.id)}
       </div>
-
-      <footer class="detail-footer">
-        ${bookmarkButton(item)}
-        <div class="rating-row detail-rating">
-          ${KNOWLEDGE_LEVELS.map((level) => `
-            <button
-              class="rating-button ${normalizeRating(state.ratings[item.id]) === level.value ? "active" : ""}"
-              type="button"
-              data-action="rate-close"
-              data-id="${escapeHtml(item.id)}"
-              data-value="${level.value}"
-            >${escapeHtml(level.label)}</button>
-          `).join("")}
-        </div>
-        <button id="closeDetailButton" class="close-button list-close-button" type="button" data-action="close-detail" aria-label="一覧へ戻る">
-          <span class="toggle-icon list-icon" aria-hidden="true"></span>
-        </button>
-      </footer>
     `;
   }
 
@@ -453,6 +477,10 @@
     });
 
     elements.bookmarkToggleButton.addEventListener("click", () => {
+      if (state.view === "detail" && state.selectedPhrase) {
+        toggleBookmark(state.selectedPhrase.id);
+        return;
+      }
       state.bookmarkOnly = !state.bookmarkOnly;
       renderCards();
     });
@@ -474,6 +502,7 @@
 
     elements.viewToggleButton.addEventListener("click", () => {
       if (state.view === "detail") {
+        state.lastListView = "toc";
         closeDetail();
         return;
       }
@@ -488,7 +517,7 @@
     });
 
     elements.openFilterButton.addEventListener("click", openFilter);
-    elements.closeFilterButton.addEventListener("click", closeFilter);
+    elements.applyFilterButton.addEventListener("click", closeFilter);
 
     document.addEventListener("click", (event) => {
       const actionTarget = event.target.closest("[data-action]");
@@ -501,9 +530,6 @@
       if (action === "open-random-unread") {
         const randomItem = getUnreadRandomItem(actionTarget.dataset.excludeId);
         if (randomItem) openDetail(randomItem.id);
-      }
-      if (action === "rate-close") {
-        setRating(id, actionTarget.dataset.value);
       }
       if (action === "close-detail") closeDetail();
     });

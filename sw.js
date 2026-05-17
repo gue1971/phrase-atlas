@@ -1,11 +1,11 @@
-const CACHE_NAME = "kotoba-karute-v20260517-520-cachefix";
+const CACHE_NAME = "kotoba-karute-v20260517-detail-footer";
 
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./style.css?v=20260515-header-buttons",
+  "./style.css?v=20260517-detail-footer",
   "./phrases.js?v=20260517-520",
-  "./app.js?v=20260517-cachefix",
+  "./app.js?v=20260517-detail-footer",
   "./manifest.webmanifest",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
