@@ -523,7 +523,17 @@
 
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
-      navigator.serviceWorker.register("./sw.js").catch(() => {});
+      let reloadingForUpdate = false;
+      navigator.serviceWorker.addEventListener("controllerchange", () => {
+        if (reloadingForUpdate) return;
+        reloadingForUpdate = true;
+        window.location.reload();
+      });
+
+      navigator.serviceWorker
+        .register("./sw.js")
+        .then((registration) => registration.update())
+        .catch(() => {});
     });
   }
 })();
