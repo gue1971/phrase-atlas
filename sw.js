@@ -1,10 +1,10 @@
-const CACHE_NAME = "kotoba-karute-v20260519-600";
+const CACHE_NAME = "kotoba-karute-v20260520-794";
 
 const APP_SHELL = [
   "./",
   "./index.html",
   "./style.css?v=20260517-detail-footer",
-  "./phrases.js?v=20260519-600",
+  "./phrases.js?v=20260520-794",
   "./app.js?v=20260517-detail-footer",
   "./manifest.webmanifest",
   "./icons/icon-192.png",
