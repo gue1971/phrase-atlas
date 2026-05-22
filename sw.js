@@ -1,9 +1,9 @@
-const CACHE_NAME = "kotoba-karute-v20260522-progress-font";
+const CACHE_NAME = "kotoba-karute-v20260522-footer-tune";
 
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./style.css?v=20260522-progress-font",
+  "./style.css?v=20260522-footer-tune",
   "./phrases.js?v=20260521-847",
   "./app.js?v=20260522-progress-font",
   "./manifest.webmanifest",
