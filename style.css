@@ -153,6 +153,13 @@ button {
   background: #f2d69c;
 }
 
+.progress-chip:not(.active) {
+  color: #8a929d;
+  background: #f4f5f6;
+  border-color: #e4e7eb;
+  opacity: 0.56;
+}
+
 .controls {
   display: grid;
   gap: 18px;

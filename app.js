@@ -7,11 +7,13 @@
   const STORAGE_KEY = "phrase-atlas-knowledge";
   const BOOKMARK_STORAGE_KEY = "phrase-atlas-bookmarks";
   const DETAIL_FONT_STORAGE_KEY = "phrase-atlas-detail-font-large";
+  const DEFAULT_PROGRESS_FILTERS = { unread: true, read: true, settled: true };
 
   const state = {
     query: "",
     category: "all",
     knowledge: "all",
+    progressFilters: { ...DEFAULT_PROGRESS_FILTERS },
     bookmarkOnly: false,
     sort: "fame",
     view: "detail",
@@ -134,7 +136,7 @@
       const matchesQuery = !query || getSearchText(item).includes(query);
       const matchesCategory = state.category === "all" || item.category === state.category;
       const currentRating = normalizeRating(state.ratings[item.id]);
-      const matchesKnowledge = state.knowledge === "all" || currentRating === state.knowledge;
+      const matchesKnowledge = Boolean(state.progressFilters[currentRating]);
       const matchesBookmark = !state.bookmarkOnly || isBookmarked(item.id);
       return matchesQuery && matchesCategory && matchesKnowledge && matchesBookmark;
     }).sort((a, b) => {
@@ -288,7 +290,13 @@
   }
 
   function getProgressCounts() {
-    return PHRASES.reduce(
+    const query = state.query.trim().toLowerCase();
+    return PHRASES.filter((item) => {
+      const matchesQuery = !query || getSearchText(item).includes(query);
+      const matchesCategory = state.category === "all" || item.category === state.category;
+      const matchesBookmark = !state.bookmarkOnly || isBookmarked(item.id);
+      return matchesQuery && matchesCategory && matchesBookmark;
+    }).reduce(
       (counts, item) => {
         counts[normalizeRating(state.ratings[item.id])] += 1;
         return counts;
@@ -303,7 +311,12 @@
       <div class="footer-progress" aria-label="学習進捗">
         ${KNOWLEDGE_LEVELS.map((level) => `
           <span
-            class="progress-chip progress-${level.value}"
+            class="progress-chip progress-${level.value} ${state.progressFilters[level.value] ? "active" : ""}"
+            role="button"
+            tabindex="0"
+            data-action="toggle-progress-filter"
+            data-value="${level.value}"
+            aria-pressed="${state.progressFilters[level.value]}"
             aria-label="${escapeHtml(level.label)} ${counts[level.value]}"
             title="${escapeHtml(level.label)} ${counts[level.value]}"
           >${counts[level.value]}</span>
@@ -501,6 +514,19 @@
     if (state.selectedPhrase) renderDetail(state.selectedPhrase);
   }
 
+  function syncKnowledgeSelectToProgressFilters() {
+    const activeLevels = KNOWLEDGE_LEVELS.filter((level) => state.progressFilters[level.value]).map((level) => level.value);
+    state.knowledge = activeLevels.length === 1 ? activeLevels[0] : "all";
+    elements.knowledgeFilter.value = state.knowledge;
+  }
+
+  function toggleProgressFilter(value) {
+    if (!Object.prototype.hasOwnProperty.call(DEFAULT_PROGRESS_FILTERS, value)) return;
+    state.progressFilters[value] = !state.progressFilters[value];
+    syncKnowledgeSelectToProgressFilters();
+    renderCards();
+  }
+
   function toggleBookmark(id) {
     if (isBookmarked(id)) {
       delete state.bookmarks[id];
@@ -525,6 +551,9 @@
 
     elements.knowledgeFilter.addEventListener("change", (event) => {
       state.knowledge = event.target.value;
+      state.progressFilters = event.target.value === "all"
+        ? { ...DEFAULT_PROGRESS_FILTERS }
+        : { unread: false, read: false, settled: false, [event.target.value]: true };
       renderCards();
     });
 
@@ -541,6 +570,7 @@
       state.query = "";
       state.category = "all";
       state.knowledge = "all";
+      state.progressFilters = { ...DEFAULT_PROGRESS_FILTERS };
       state.bookmarkOnly = false;
       state.sort = "fame";
       state.view = "toc";
@@ -586,6 +616,7 @@
         const randomItem = getUnreadRandomItem(actionTarget.dataset.excludeId);
         if (randomItem) openDetail(randomItem.id);
       }
+      if (action === "toggle-progress-filter") toggleProgressFilter(actionTarget.dataset.value);
       if (action === "toggle-detail-text") toggleDetailTextSize();
       if (action === "close-detail") closeDetail();
     });
@@ -594,6 +625,14 @@
       if ((event.key === "Enter" || event.key === " ") && event.target.closest('[data-action="toggle-detail-text"]')) {
         event.preventDefault();
         toggleDetailTextSize();
+      }
+    });
+
+    elements.footerCenter.addEventListener("keydown", (event) => {
+      const progressTarget = event.target.closest('[data-action="toggle-progress-filter"]');
+      if ((event.key === "Enter" || event.key === " ") && progressTarget) {
+        event.preventDefault();
+        toggleProgressFilter(progressTarget.dataset.value);
       }
     });
 

@@ -1,11 +1,11 @@
-const CACHE_NAME = "kotoba-karute-v20260522-header-font-toggle";
+const CACHE_NAME = "kotoba-karute-v20260522-progress-filter";
 
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./style.css?v=20260522-header-font-toggle",
+  "./style.css?v=20260522-progress-filter",
   "./phrases.js?v=20260521-847",
-  "./app.js?v=20260522-header-font-toggle",
+  "./app.js?v=20260522-progress-filter",
   "./manifest.webmanifest",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
