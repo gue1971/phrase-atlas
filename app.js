@@ -262,7 +262,7 @@
         <div class="rating-row footer-rating">
           ${KNOWLEDGE_LEVELS.map((level) => `
             <button
-              class="rating-button ${normalizeRating(state.ratings[state.selectedPhrase?.id]) === level.value ? "active" : ""}"
+              class="rating-button rating-${level.value} ${normalizeRating(state.ratings[state.selectedPhrase?.id]) === level.value ? "active" : ""}"
               type="button"
               data-action="rate"
               data-id="${escapeHtml(state.selectedPhrase?.id)}"

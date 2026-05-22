@@ -625,14 +625,46 @@ button:focus-visible {
   color: #4b5563;
   background: var(--surface-strong);
   border: 1px solid transparent;
-  border-radius: 7px;
+  border-radius: 999px;
   font-size: 0.82rem;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .rating-button.active {
+  box-shadow: inset 0 0 0 2px rgba(31, 41, 51, 0.08);
+}
+
+.rating-button.rating-unread {
+  color: #655b4a;
+  background: #e6dfd2;
+}
+
+.rating-button.rating-read {
+  color: #1d5a62;
+  background: #d9eef0;
+}
+
+.rating-button.rating-settled {
+  color: #6a3f08;
+  background: #f2d69c;
+}
+
+.rating-button.rating-unread.active {
   color: #fff;
-  background: var(--accent);
+  background: #2f6374;
+  border-color: #2f6374;
+}
+
+.rating-button.rating-read.active {
+  color: #fff;
+  background: #2f7a80;
+  border-color: #2f7a80;
+}
+
+.rating-button.rating-settled.active {
+  color: #fff;
+  background: #b7791f;
+  border-color: #b7791f;
 }
 
 .empty-state {
@@ -974,9 +1006,11 @@ button:focus-visible {
 }
 
 .footer-rating .rating-button {
-  min-height: 40px;
-  padding: 8px 12px;
-  font-size: 0.9rem;
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  font-size: 0.78rem;
   font-weight: 800;
 }
 
@@ -1039,7 +1073,7 @@ button:focus-visible {
   }
 
   .view-detail .footer-rating {
-    width: min(240px, 100%);
+    width: min(148px, 100%);
   }
 
   .toggle-button {
