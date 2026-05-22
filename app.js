@@ -6,6 +6,7 @@
   ];
   const STORAGE_KEY = "phrase-atlas-knowledge";
   const BOOKMARK_STORAGE_KEY = "phrase-atlas-bookmarks";
+  const DETAIL_FONT_STORAGE_KEY = "phrase-atlas-detail-font-large";
 
   const state = {
     query: "",
@@ -17,6 +18,7 @@
     lastListView: "toc",
     lastDetailId: null,
     selectedPhrase: null,
+    detailTextLarge: loadDetailTextLarge(),
     ratings: loadRatings(),
     bookmarks: loadBookmarks(),
   };
@@ -66,6 +68,14 @@
 
   function saveBookmarks() {
     localStorage.setItem(BOOKMARK_STORAGE_KEY, JSON.stringify(state.bookmarks));
+  }
+
+  function loadDetailTextLarge() {
+    return localStorage.getItem(DETAIL_FONT_STORAGE_KEY) === "true";
+  }
+
+  function saveDetailTextLarge() {
+    localStorage.setItem(DETAIL_FONT_STORAGE_KEY, String(state.detailTextLarge));
   }
 
   function escapeHtml(value) {
@@ -267,12 +277,38 @@
       return;
     }
 
-    elements.footerCenter.hidden = true;
+    elements.footerCenter.hidden = false;
+    elements.footerCenter.innerHTML = renderProgressChips();
     elements.returnDetailButton.hidden = !state.lastDetailId;
     elements.returnDetailButton.disabled = !state.lastDetailId;
     elements.openFilterButton.hidden = false;
     elements.footerLeft.append(elements.returnDetailButton, elements.viewToggleButton);
     elements.footerRight.append(elements.bookmarkToggleButton, elements.openFilterButton);
+  }
+
+  function getProgressCounts() {
+    return PHRASES.reduce(
+      (counts, item) => {
+        counts[normalizeRating(state.ratings[item.id])] += 1;
+        return counts;
+      },
+      { unread: 0, read: 0, settled: 0 }
+    );
+  }
+
+  function renderProgressChips() {
+    const counts = getProgressCounts();
+    return `
+      <div class="footer-progress" aria-label="学習進捗">
+        ${KNOWLEDGE_LEVELS.map((level) => `
+          <span
+            class="progress-chip progress-${level.value}"
+            aria-label="${escapeHtml(level.label)} ${counts[level.value]}"
+            title="${escapeHtml(level.label)} ${counts[level.value]}"
+          >${counts[level.value]}</span>
+        `).join("")}
+      </div>
+    `;
   }
 
   function renderTocItem(item) {
@@ -322,8 +358,16 @@
 
   function renderDetail(item) {
     const related = getRelatedPhrases(item);
+    document.body.classList.toggle("detail-large-text", state.detailTextLarge);
     elements.detailContent.innerHTML = `
-      <header class="detail-header">
+      <header
+        class="detail-header"
+        role="button"
+        tabindex="0"
+        data-action="toggle-detail-text"
+        aria-label="詳細本文の文字サイズを${state.detailTextLarge ? "標準" : "大きく"}する"
+        aria-pressed="${state.detailTextLarge}"
+      >
         <div>
           <div class="detail-kicker">
             <span class="eyebrow">${escapeHtml(item.category)}</span>
@@ -449,6 +493,13 @@
     if (state.selectedPhrase?.id === id) renderDetail(state.selectedPhrase);
   }
 
+  function toggleDetailTextSize() {
+    state.detailTextLarge = !state.detailTextLarge;
+    saveDetailTextLarge();
+    document.body.classList.toggle("detail-large-text", state.detailTextLarge);
+    if (state.selectedPhrase) renderDetail(state.selectedPhrase);
+  }
+
   function toggleBookmark(id) {
     if (isBookmarked(id)) {
       delete state.bookmarks[id];
@@ -531,7 +582,15 @@
         const randomItem = getUnreadRandomItem(actionTarget.dataset.excludeId);
         if (randomItem) openDetail(randomItem.id);
       }
+      if (action === "toggle-detail-text") toggleDetailTextSize();
       if (action === "close-detail") closeDetail();
+    });
+
+    elements.detailContent.addEventListener("keydown", (event) => {
+      if ((event.key === "Enter" || event.key === " ") && event.target.closest('[data-action="toggle-detail-text"]')) {
+        event.preventDefault();
+        toggleDetailTextSize();
+      }
     });
 
     elements.filterOverlay.addEventListener("click", (event) => {

@@ -101,6 +101,7 @@ button {
 
 .footer-center {
   min-width: 0;
+  justify-self: center;
 }
 
 .footer-center[hidden] {
@@ -113,6 +114,46 @@ button {
 
 .footer-right {
   justify-self: end;
+}
+
+.footer-progress {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 3px;
+  background: #f2efe8;
+  border: 1px solid #e5dccd;
+  border-radius: 999px;
+}
+
+.progress-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  height: 30px;
+  padding: 0 9px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.progress-unread {
+  color: #655b4a;
+  background: #e6dfd2;
+}
+
+.progress-read {
+  color: #1d5a62;
+  background: #d9eef0;
+}
+
+.progress-settled {
+  color: #6a3f08;
+  background: #f2d69c;
 }
 
 .controls {
@@ -684,6 +725,14 @@ button:focus-visible {
   padding: 18px 20px 14px;
   background: var(--surface);
   border-bottom: 1px solid var(--line);
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.detail-header:focus-visible {
+  outline: 3px solid rgba(25, 96, 116, 0.24);
+  outline-offset: -5px;
 }
 
 .detail-kicker {
@@ -739,11 +788,22 @@ button:focus-visible {
   background: #fbfaf7;
   border: 1px solid #ece6d9;
   border-radius: 8px;
+  font-size: 1rem;
+  line-height: 1.75;
 }
 
 .explanation-section p,
 .note-section p {
   margin: 0;
+  font-size: 1rem;
+  line-height: 1.85;
+}
+
+.detail-large-text .detail-summary,
+.detail-large-text .explanation-section p,
+.detail-large-text .note-section p {
+  font-size: 1.18rem;
+  line-height: 1.95;
 }
 
 .detail-grid {
@@ -937,7 +997,25 @@ button:focus-visible {
   }
 
   .bottom-bar {
+    grid-template-columns: minmax(86px, auto) minmax(92px, 1fr) minmax(86px, auto);
+    gap: 8px;
     padding: 9px 10px calc(9px + env(safe-area-inset-bottom));
+  }
+
+  .footer-actions {
+    gap: 6px;
+  }
+
+  .footer-progress {
+    gap: 4px;
+    padding: 2px;
+  }
+
+  .progress-chip {
+    min-width: 28px;
+    height: 28px;
+    padding: 0 7px;
+    font-size: 0.82rem;
   }
 
   .toggle-button {
@@ -984,6 +1062,13 @@ button:focus-visible {
 
   .detail-body {
     padding: 16px 18px 16px;
+  }
+
+  .detail-large-text .detail-summary,
+  .detail-large-text .explanation-section p,
+  .detail-large-text .note-section p {
+    font-size: 1.16rem;
+    line-height: 1.9;
   }
 
   .related-list {
