@@ -27,6 +27,7 @@
     searchInput: document.querySelector("#searchInput"),
     categoryFilter: document.querySelector("#categoryFilter"),
     knowledgeFilter: document.querySelector("#knowledgeFilter"),
+    topBar: document.querySelector("#topBar"),
     headerTitle: document.querySelector("#headerTitle"),
     bookmarkToggleButton: document.querySelector("#bookmarkToggleButton"),
     resetButton: document.querySelector("#resetButton"),
@@ -569,6 +570,9 @@
 
     elements.openFilterButton.addEventListener("click", openFilter);
     elements.applyFilterButton.addEventListener("click", closeFilter);
+    elements.topBar.addEventListener("click", () => {
+      if (state.view === "detail") toggleDetailTextSize();
+    });
 
     document.addEventListener("click", (event) => {
       const actionTarget = event.target.closest("[data-action]");

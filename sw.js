@@ -1,11 +1,11 @@
-const CACHE_NAME = "kotoba-karute-v20260522-rating-active-only";
+const CACHE_NAME = "kotoba-karute-v20260522-header-font-toggle";
 
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./style.css?v=20260522-rating-active-only",
+  "./style.css?v=20260522-header-font-toggle",
   "./phrases.js?v=20260521-847",
-  "./app.js?v=20260522-rating-circles",
+  "./app.js?v=20260522-header-font-toggle",
   "./manifest.webmanifest",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
