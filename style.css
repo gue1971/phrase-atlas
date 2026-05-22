@@ -635,18 +635,18 @@ button:focus-visible {
 }
 
 .rating-button.rating-unread {
-  color: #655b4a;
-  background: #e6dfd2;
+  color: #4b5563;
+  background: var(--surface-strong);
 }
 
 .rating-button.rating-read {
-  color: #1d5a62;
-  background: #d9eef0;
+  color: #4b5563;
+  background: var(--surface-strong);
 }
 
 .rating-button.rating-settled {
-  color: #6a3f08;
-  background: #f2d69c;
+  color: #4b5563;
+  background: var(--surface-strong);
 }
 
 .rating-button.rating-unread.active {

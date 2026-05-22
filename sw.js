@@ -1,9 +1,9 @@
-const CACHE_NAME = "kotoba-karute-v20260522-rating-circles";
+const CACHE_NAME = "kotoba-karute-v20260522-rating-active-only";
 
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./style.css?v=20260522-rating-circles",
+  "./style.css?v=20260522-rating-active-only",
   "./phrases.js?v=20260521-847",
   "./app.js?v=20260522-rating-circles",
   "./manifest.webmanifest",
