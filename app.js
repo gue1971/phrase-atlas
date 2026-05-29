@@ -7,7 +7,9 @@
   const STORAGE_KEY = "phrase-atlas-knowledge";
   const BOOKMARK_STORAGE_KEY = "phrase-atlas-bookmarks";
   const DETAIL_FONT_STORAGE_KEY = "phrase-atlas-detail-font-large";
+  const BACKUP_META_STORAGE_KEY = "phrase-atlas-backup-meta";
   const DEFAULT_PROGRESS_FILTERS = { unread: true, read: true, settled: true };
+  const BACKUP_VERSION = 1;
 
   const state = {
     query: "",
@@ -23,6 +25,7 @@
     detailTextLarge: loadDetailTextLarge(),
     ratings: loadRatings(),
     bookmarks: loadBookmarks(),
+    backupMeta: loadBackupMeta(),
   };
 
   const elements = {
@@ -31,6 +34,8 @@
     knowledgeFilter: document.querySelector("#knowledgeFilter"),
     topBar: document.querySelector("#topBar"),
     headerTitle: document.querySelector("#headerTitle"),
+    settingsButton: document.querySelector("#settingsButton"),
+    backupBadge: document.querySelector("#backupBadge"),
     bookmarkToggleButton: document.querySelector("#bookmarkToggleButton"),
     resetButton: document.querySelector("#resetButton"),
     applyFilterButton: document.querySelector("#applyFilterButton"),
@@ -45,6 +50,17 @@
     cardList: document.querySelector("#cardList"),
     emptyState: document.querySelector("#emptyState"),
     filterOverlay: document.querySelector("#filterOverlay"),
+    settingsOverlay: document.querySelector("#settingsOverlay"),
+    backupNotice: document.querySelector("#backupNotice"),
+    settingsUnreadCount: document.querySelector("#settingsUnreadCount"),
+    settingsReadCount: document.querySelector("#settingsReadCount"),
+    settingsSettledCount: document.querySelector("#settingsSettledCount"),
+    settingsBookmarkCount: document.querySelector("#settingsBookmarkCount"),
+    lastBackupText: document.querySelector("#lastBackupText"),
+    exportBackupButton: document.querySelector("#exportBackupButton"),
+    importBackupButton: document.querySelector("#importBackupButton"),
+    importBackupInput: document.querySelector("#importBackupInput"),
+    closeSettingsButton: document.querySelector("#closeSettingsButton"),
     detailOverlay: document.querySelector("#detailOverlay"),
     detailContent: document.querySelector("#detailContent"),
   };
@@ -81,6 +97,19 @@
     localStorage.setItem(DETAIL_FONT_STORAGE_KEY, String(state.detailTextLarge));
   }
 
+  function loadBackupMeta() {
+    try {
+      return JSON.parse(localStorage.getItem(BACKUP_META_STORAGE_KEY)) || null;
+    } catch {
+      return null;
+    }
+  }
+
+  function saveBackupMeta(meta) {
+    state.backupMeta = meta;
+    localStorage.setItem(BACKUP_META_STORAGE_KEY, JSON.stringify(meta));
+  }
+
   function escapeHtml(value) {
     return String(value ?? "")
       .replaceAll("&", "&amp;")
@@ -100,6 +129,25 @@
   function getRatingLabel(id) {
     const rating = normalizeRating(state.ratings[id]);
     return KNOWLEDGE_LEVELS.find((item) => item.value === rating)?.label || "未読";
+  }
+
+  function getAllProgressCounts() {
+    return PHRASES.reduce(
+      (counts, item) => {
+        counts[normalizeRating(state.ratings[item.id])] += 1;
+        return counts;
+      },
+      { unread: 0, read: 0, settled: 0 }
+    );
+  }
+
+  function getRatedCount() {
+    const counts = getAllProgressCounts();
+    return counts.read + counts.settled;
+  }
+
+  function getBookmarkCount() {
+    return Object.values(state.bookmarks).filter(Boolean).length;
   }
 
   function normalizeRating(value) {
@@ -222,6 +270,7 @@
     elements.viewToggleIcon.className = `toggle-icon ${getViewToggleIconClass()}`;
     document.body.classList.toggle("view-detail", state.view === "detail");
     renderFooterState();
+    renderBackupBadge();
   }
 
   function getViewToggleLabel() {
@@ -259,7 +308,8 @@
     elements.footerRight.replaceChildren();
 
     if (state.view === "detail") {
-      elements.footerLeft.append(elements.bookmarkToggleButton);
+      elements.settingsButton.hidden = false;
+      elements.footerLeft.append(elements.settingsButton);
       elements.footerCenter.hidden = false;
       elements.footerCenter.innerHTML = `
         <div class="rating-row footer-rating">
@@ -274,7 +324,7 @@
           `).join("")}
         </div>
       `;
-      elements.footerRight.append(elements.viewToggleButton);
+      elements.footerRight.append(elements.bookmarkToggleButton, elements.viewToggleButton);
       elements.returnDetailButton.hidden = true;
       elements.openFilterButton.hidden = true;
       return;
@@ -285,8 +335,25 @@
     elements.returnDetailButton.hidden = !state.lastDetailId;
     elements.returnDetailButton.disabled = !state.lastDetailId;
     elements.openFilterButton.hidden = false;
+    elements.settingsButton.hidden = true;
     elements.footerLeft.append(elements.returnDetailButton, elements.viewToggleButton);
     elements.footerRight.append(elements.bookmarkToggleButton, elements.openFilterButton);
+  }
+
+  function shouldRecommendBackup() {
+    const meta = state.backupMeta;
+    if (!meta?.exportedAt) return getRatedCount() > 0 || getBookmarkCount() > 0;
+    const ratedDelta = getRatedCount() - (meta.ratedCount || 0);
+    const bookmarkDelta = getBookmarkCount() - (meta.bookmarkCount || 0);
+    const daysSinceBackup = (Date.now() - new Date(meta.exportedAt).getTime()) / 86400000;
+    return ratedDelta >= 10 || bookmarkDelta >= 5 || daysSinceBackup >= 7;
+  }
+
+  function renderBackupBadge() {
+    const recommended = shouldRecommendBackup();
+    elements.backupBadge.hidden = !recommended;
+    elements.settingsButton.classList.toggle("needs-backup", recommended);
+    elements.settingsButton.setAttribute("aria-label", recommended ? "保守・設定を開く。バックアップ推奨" : "保守・設定を開く");
   }
 
   function getProgressCounts() {
@@ -493,6 +560,117 @@
     document.body.classList.remove("modal-open");
   }
 
+  function openSettings() {
+    renderSettingsPanel();
+    elements.settingsOverlay.hidden = false;
+    document.body.classList.add("modal-open");
+  }
+
+  function closeSettings() {
+    elements.settingsOverlay.hidden = true;
+    document.body.classList.remove("modal-open");
+  }
+
+  function renderSettingsPanel() {
+    const counts = getAllProgressCounts();
+    elements.settingsUnreadCount.textContent = counts.unread;
+    elements.settingsReadCount.textContent = counts.read;
+    elements.settingsSettledCount.textContent = counts.settled;
+    elements.settingsBookmarkCount.textContent = getBookmarkCount();
+    elements.lastBackupText.textContent = state.backupMeta?.exportedAt
+      ? `最終バックアップ: ${new Date(state.backupMeta.exportedAt).toLocaleString("ja-JP")}`
+      : "最終バックアップ: 未実施";
+    const recommended = shouldRecommendBackup();
+    elements.backupNotice.hidden = !recommended;
+    elements.backupNotice.textContent = recommended
+      ? "バックアップ推奨です。進捗やお気に入りが増えています。"
+      : "";
+  }
+
+  function createBackupPayload() {
+    return {
+      app: "kotoba-karute",
+      version: BACKUP_VERSION,
+      exportedAt: new Date().toISOString(),
+      knowledge: state.ratings,
+      bookmarks: state.bookmarks,
+      settings: {
+        detailFontLarge: state.detailTextLarge,
+      },
+    };
+  }
+
+  function exportBackup() {
+    const payload = createBackupPayload();
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    const date = new Date().toISOString().slice(0, 10).replaceAll("-", "");
+    anchor.href = url;
+    anchor.download = `kotoba-karute-backup-${date}.json`;
+    document.body.append(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+    saveBackupMeta({
+      exportedAt: payload.exportedAt,
+      ratedCount: getRatedCount(),
+      bookmarkCount: getBookmarkCount(),
+    });
+    renderSettingsPanel();
+    renderBackupBadge();
+  }
+
+  function importBackupFile(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.addEventListener("load", () => {
+      try {
+        const payload = JSON.parse(String(reader.result || "{}"));
+        if (payload.app !== "kotoba-karute" || typeof payload !== "object") throw new Error("invalid backup");
+        state.ratings = sanitizeRatings(payload.knowledge);
+        state.bookmarks = sanitizeBookmarks(payload.bookmarks);
+        state.detailTextLarge = Boolean(payload.settings?.detailFontLarge);
+        saveRatings();
+        saveBookmarks();
+        saveDetailTextLarge();
+        saveBackupMeta({
+          exportedAt: new Date().toISOString(),
+          ratedCount: getRatedCount(),
+          bookmarkCount: getBookmarkCount(),
+        });
+        document.body.classList.toggle("detail-large-text", state.detailTextLarge);
+        renderSettingsPanel();
+        renderCards();
+        if (state.selectedPhrase) {
+          state.selectedPhrase = PHRASES.find((item) => item.id === state.selectedPhrase.id) || state.selectedPhrase;
+          renderDetail(state.selectedPhrase);
+        }
+      } catch {
+        elements.backupNotice.hidden = false;
+        elements.backupNotice.textContent = "バックアップファイルを読み込めませんでした。";
+      } finally {
+        elements.importBackupInput.value = "";
+      }
+    });
+    reader.readAsText(file);
+  }
+
+  function sanitizeRatings(value) {
+    if (!value || typeof value !== "object") return {};
+    return Object.fromEntries(
+      Object.entries(value)
+        .map(([id, rating]) => [id, normalizeRating(rating)])
+        .filter(([id]) => PHRASES.some((item) => item.id === id))
+    );
+  }
+
+  function sanitizeBookmarks(value) {
+    if (!value || typeof value !== "object") return {};
+    const phraseIds = new Set(PHRASES.map((item) => item.id));
+    return Object.fromEntries(Object.entries(value).filter(([id, active]) => phraseIds.has(id) && active));
+  }
+
   function closeDetail() {
     elements.detailOverlay.hidden = true;
     state.selectedPhrase = null;
@@ -600,6 +778,11 @@
 
     elements.openFilterButton.addEventListener("click", openFilter);
     elements.applyFilterButton.addEventListener("click", closeFilter);
+    elements.settingsButton.addEventListener("click", openSettings);
+    elements.closeSettingsButton.addEventListener("click", closeSettings);
+    elements.exportBackupButton.addEventListener("click", exportBackup);
+    elements.importBackupButton.addEventListener("click", () => elements.importBackupInput.click());
+    elements.importBackupInput.addEventListener("change", (event) => importBackupFile(event.target.files?.[0]));
     elements.topBar.addEventListener("click", () => {
       if (state.view === "detail") toggleDetailTextSize();
     });
@@ -639,8 +822,12 @@
     elements.filterOverlay.addEventListener("click", (event) => {
       if (event.target === elements.filterOverlay) closeFilter();
     });
+    elements.settingsOverlay.addEventListener("click", (event) => {
+      if (event.target === elements.settingsOverlay) closeSettings();
+    });
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape" && !elements.filterOverlay.hidden) closeFilter();
+      if (event.key === "Escape" && !elements.settingsOverlay.hidden) closeSettings();
     });
   }
 

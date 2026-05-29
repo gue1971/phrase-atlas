@@ -10,7 +10,7 @@
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
-    <link rel="stylesheet" href="./style.css?v=20260522-progress-filter" />
+    <link rel="stylesheet" href="./style.css?v=20260530-backup-settings" />
   </head>
   <body>
     <header id="topBar" class="top-bar">
@@ -23,6 +23,10 @@
       <div id="footerRight" class="footer-actions footer-right"></div>
 
       <div id="footerControls" hidden>
+        <button id="settingsButton" class="icon-button settings-button" type="button" aria-label="保守・設定を開く">
+          <span class="settings-icon" aria-hidden="true">⚙</span>
+          <span id="backupBadge" class="backup-badge" hidden></span>
+        </button>
         <button id="returnDetailButton" class="icon-button nav-icon-button return-detail-button" type="button" aria-label="最後のカルテへ戻る" hidden>
           <span class="toggle-icon return-icon" aria-hidden="true"></span>
         </button>
@@ -82,7 +86,45 @@
       </section>
     </div>
 
+    <div id="settingsOverlay" class="filter-overlay" hidden>
+      <section class="filter-panel settings-panel" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+        <div class="filter-panel-head">
+          <h2 id="settingsTitle">保守・設定</h2>
+        </div>
+
+        <div id="backupNotice" class="backup-notice" hidden></div>
+
+        <div class="settings-stats" aria-label="保存状況">
+          <div>
+            <span>未読</span>
+            <strong id="settingsUnreadCount">0</strong>
+          </div>
+          <div>
+            <span>既読</span>
+            <strong id="settingsReadCount">0</strong>
+          </div>
+          <div>
+            <span>定着</span>
+            <strong id="settingsSettledCount">0</strong>
+          </div>
+          <div>
+            <span>お気に入り</span>
+            <strong id="settingsBookmarkCount">0</strong>
+          </div>
+        </div>
+
+        <p id="lastBackupText" class="backup-meta">最終バックアップ: 未実施</p>
+
+        <div class="control-actions">
+          <button id="exportBackupButton" class="primary-button" type="button">バックアップを書き出す</button>
+          <button id="importBackupButton" class="ghost-button" type="button">復元する</button>
+          <button id="closeSettingsButton" class="ghost-button" type="button">閉じる</button>
+        </div>
+        <input id="importBackupInput" type="file" accept="application/json,.json" hidden />
+      </section>
+    </div>
+
     <script src="./phrases.js?v=20260521-847"></script>
-    <script src="./app.js?v=20260522-progress-filter"></script>
+    <script src="./app.js?v=20260530-backup-settings"></script>
   </body>
 </html>

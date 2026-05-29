@@ -1,11 +1,11 @@
-const CACHE_NAME = "kotoba-karute-v20260522-progress-filter";
+const CACHE_NAME = "kotoba-karute-v20260530-backup-settings";
 
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./style.css?v=20260522-progress-filter",
+  "./style.css?v=20260530-backup-settings",
   "./phrases.js?v=20260521-847",
-  "./app.js?v=20260522-progress-filter",
+  "./app.js?v=20260530-backup-settings",
   "./manifest.webmanifest",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
