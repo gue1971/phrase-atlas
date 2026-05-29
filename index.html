@@ -10,7 +10,7 @@
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
-    <link rel="stylesheet" href="./style.css?v=20260530-backup-settings" />
+    <link rel="stylesheet" href="./style.css?v=20260530-backup-tune" />
   </head>
   <body>
     <header id="topBar" class="top-bar">
@@ -24,7 +24,7 @@
 
       <div id="footerControls" hidden>
         <button id="settingsButton" class="icon-button settings-button" type="button" aria-label="保守・設定を開く">
-          <span class="settings-icon" aria-hidden="true">⚙</span>
+          <span class="maintenance-icon" aria-hidden="true"></span>
           <span id="backupBadge" class="backup-badge" hidden></span>
         </button>
         <button id="returnDetailButton" class="icon-button nav-icon-button return-detail-button" type="button" aria-label="最後のカルテへ戻る" hidden>
@@ -115,16 +115,23 @@
 
         <p id="lastBackupText" class="backup-meta">最終バックアップ: 未実施</p>
 
-        <div class="control-actions">
-          <button id="exportBackupButton" class="primary-button" type="button">バックアップを書き出す</button>
-          <button id="importBackupButton" class="ghost-button" type="button">復元する</button>
-          <button id="closeSettingsButton" class="ghost-button" type="button">閉じる</button>
+        <div class="settings-section">
+          <div class="settings-section-head">
+            <span>バックアップ</span>
+            <small>進捗とお気に入り</small>
+          </div>
+          <div class="backup-actions">
+            <button id="exportBackupButton" class="primary-button" type="button">保存</button>
+            <button id="importBackupButton" class="ghost-button" type="button">復元</button>
+          </div>
         </div>
+
+        <button id="closeSettingsButton" class="ghost-button compact-button" type="button">閉じる</button>
         <input id="importBackupInput" type="file" accept="application/json,.json" hidden />
       </section>
     </div>
 
     <script src="./phrases.js?v=20260521-847"></script>
-    <script src="./app.js?v=20260530-backup-settings"></script>
+    <script src="./app.js?v=20260530-backup-tune"></script>
   </body>
 </html>

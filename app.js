@@ -600,14 +600,22 @@
     };
   }
 
+  function formatBackupFileTimestamp(date) {
+    const pad = (value) => String(value).padStart(2, "0");
+    return [
+      date.getFullYear(),
+      `${pad(date.getMonth() + 1)}${pad(date.getDate())}`,
+      `${pad(date.getHours())}${pad(date.getMinutes())}`,
+    ].join("-");
+  }
+
   function exportBackup() {
     const payload = createBackupPayload();
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
-    const date = new Date().toISOString().slice(0, 10).replaceAll("-", "");
     anchor.href = url;
-    anchor.download = `kotoba-karute-backup-${date}.json`;
+    anchor.download = `kotoba-karute-${formatBackupFileTimestamp(new Date())}.json`;
     document.body.append(anchor);
     anchor.click();
     anchor.remove();
