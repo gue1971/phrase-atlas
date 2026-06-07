@@ -239,6 +239,16 @@ button:focus-visible {
   background: var(--accent-dark);
 }
 
+.danger-button {
+  color: #fff;
+  background: #9f3f3f;
+  border-color: #9f3f3f;
+}
+
+.danger-button:hover {
+  background: #813333;
+}
+
 .ghost-button {
   color: var(--accent);
   background: var(--accent-soft);

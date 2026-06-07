@@ -1,11 +1,11 @@
-const CACHE_NAME = "kotoba-karute-v20260530-backup-tune";
+const CACHE_NAME = "kotoba-karute-v20260608-restore-guard";
 
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./style.css?v=20260530-backup-tune",
+  "./style.css?v=20260608-restore-guard",
   "./phrases.js?v=20260521-847",
-  "./app.js?v=20260530-backup-tune",
+  "./app.js?v=20260608-restore-guard",
   "./manifest.webmanifest",
   "./icons/icon-192.png",
   "./icons/icon-512.png",

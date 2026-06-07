@@ -8,6 +8,7 @@
   const BOOKMARK_STORAGE_KEY = "phrase-atlas-bookmarks";
   const DETAIL_FONT_STORAGE_KEY = "phrase-atlas-detail-font-large";
   const BACKUP_META_STORAGE_KEY = "phrase-atlas-backup-meta";
+  const RESTORE_PROMPT_STORAGE_KEY = "phrase-atlas-restore-prompt-seen";
   const DEFAULT_PROGRESS_FILTERS = { unread: true, read: true, settled: true };
   const BACKUP_VERSION = 1;
 
@@ -26,6 +27,8 @@
     ratings: loadRatings(),
     bookmarks: loadBookmarks(),
     backupMeta: loadBackupMeta(),
+    backupExportArmed: false,
+    restorePromptSeen: localStorage.getItem(RESTORE_PROMPT_STORAGE_KEY) === "true",
   };
 
   const elements = {
@@ -148,6 +151,14 @@
 
   function getBookmarkCount() {
     return Object.values(state.bookmarks).filter(Boolean).length;
+  }
+
+  function getSavedStateCount() {
+    return getRatedCount() + getBookmarkCount();
+  }
+
+  function isFreshStateAfterPossibleClear() {
+    return PHRASES.length >= 100 && getSavedStateCount() === 0 && !state.backupMeta?.exportedAt;
   }
 
   function normalizeRating(value) {
@@ -341,12 +352,34 @@
   }
 
   function shouldRecommendBackup() {
+    if (getBackupRisk()) return true;
     const meta = state.backupMeta;
     if (!meta?.exportedAt) return getRatedCount() > 0 || getBookmarkCount() > 0;
     const ratedDelta = getRatedCount() - (meta.ratedCount || 0);
     const bookmarkDelta = getBookmarkCount() - (meta.bookmarkCount || 0);
     const daysSinceBackup = (Date.now() - new Date(meta.exportedAt).getTime()) / 86400000;
     return ratedDelta >= 10 || bookmarkDelta >= 5 || daysSinceBackup >= 7;
+  }
+
+  function getBackupRisk() {
+    const currentTotal = getSavedStateCount();
+    const metaRated = state.backupMeta?.ratedCount || 0;
+    const metaBookmarks = state.backupMeta?.bookmarkCount || 0;
+    const metaTotal = metaRated + metaBookmarks;
+
+    if (isFreshStateAfterPossibleClear()) {
+      return "進捗とお気に入りが空です。過去に使っていた場合は、保存より先にバックアップから復元してください。";
+    }
+
+    if (!state.backupMeta?.exportedAt && currentTotal > 0 && currentTotal < 20) {
+      return "この端末には前回バックアップの記録がありません。履歴消去後の可能性がある場合は、保存より先に復元を確認してください。";
+    }
+
+    if (metaTotal >= 20 && currentTotal <= Math.max(5, Math.floor(metaTotal * 0.7))) {
+      return `前回バックアップ時は進捗・お気に入りが合計${metaTotal}件でした。現在は${currentTotal}件なので、大きく減っています。`;
+    }
+
+    return "";
   }
 
   function renderBackupBadge() {
@@ -566,13 +599,22 @@
     document.body.classList.add("modal-open");
   }
 
+  function openRestorePromptIfNeeded() {
+    if (state.restorePromptSeen || !isFreshStateAfterPossibleClear()) return;
+    state.restorePromptSeen = true;
+    localStorage.setItem(RESTORE_PROMPT_STORAGE_KEY, "true");
+    window.setTimeout(openSettings, 250);
+  }
+
   function closeSettings() {
     elements.settingsOverlay.hidden = true;
     document.body.classList.remove("modal-open");
+    resetBackupExportGuard();
   }
 
   function renderSettingsPanel() {
     const counts = getAllProgressCounts();
+    const risk = getBackupRisk();
     elements.settingsUnreadCount.textContent = counts.unread;
     elements.settingsReadCount.textContent = counts.read;
     elements.settingsSettledCount.textContent = counts.settled;
@@ -582,9 +624,33 @@
       : "最終バックアップ: 未実施";
     const recommended = shouldRecommendBackup();
     elements.backupNotice.hidden = !recommended;
-    elements.backupNotice.textContent = recommended
+    elements.backupNotice.textContent = risk || (recommended
       ? "バックアップ推奨です。進捗やお気に入りが増えています。"
-      : "";
+      : "");
+    elements.exportBackupButton.textContent = state.backupExportArmed ? "この状態で保存" : "保存";
+    elements.exportBackupButton.classList.toggle("danger-button", state.backupExportArmed);
+  }
+
+  function resetBackupExportGuard() {
+    state.backupExportArmed = false;
+    elements.exportBackupButton.textContent = "保存";
+    elements.exportBackupButton.classList.remove("danger-button");
+  }
+
+  function guardBackupExport() {
+    const risk = getBackupRisk();
+    if (!risk) {
+      resetBackupExportGuard();
+      return true;
+    }
+    if (state.backupExportArmed) return true;
+
+    state.backupExportArmed = true;
+    elements.backupNotice.hidden = false;
+    elements.backupNotice.textContent = `${risk} 問題なければ、もう一度「この状態で保存」を押してください。`;
+    elements.exportBackupButton.textContent = "この状態で保存";
+    elements.exportBackupButton.classList.add("danger-button");
+    return false;
   }
 
   function createBackupPayload() {
@@ -610,6 +676,7 @@
   }
 
   function exportBackup() {
+    if (!guardBackupExport()) return;
     const payload = createBackupPayload();
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
@@ -625,6 +692,9 @@
       ratedCount: getRatedCount(),
       bookmarkCount: getBookmarkCount(),
     });
+    state.restorePromptSeen = true;
+    localStorage.setItem(RESTORE_PROMPT_STORAGE_KEY, "true");
+    resetBackupExportGuard();
     renderSettingsPanel();
     renderBackupBadge();
   }
@@ -647,6 +717,9 @@
           ratedCount: getRatedCount(),
           bookmarkCount: getBookmarkCount(),
         });
+        state.restorePromptSeen = true;
+        localStorage.setItem(RESTORE_PROMPT_STORAGE_KEY, "true");
+        resetBackupExportGuard();
         document.body.classList.toggle("detail-large-text", state.detailTextLarge);
         renderSettingsPanel();
         renderCards();
@@ -843,6 +916,7 @@
   bindEvents();
   openDetail(getInitialPhrase().id);
   renderCards();
+  openRestorePromptIfNeeded();
 
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
