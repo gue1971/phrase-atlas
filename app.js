@@ -27,7 +27,7 @@
     ratings: loadRatings(),
     bookmarks: loadBookmarks(),
     backupMeta: loadBackupMeta(),
-    backupExportArmed: false,
+    backupActionArmed: null,
     restorePromptSeen: localStorage.getItem(RESTORE_PROMPT_STORAGE_KEY) === "true",
   };
 
@@ -61,6 +61,7 @@
     settingsBookmarkCount: document.querySelector("#settingsBookmarkCount"),
     lastBackupText: document.querySelector("#lastBackupText"),
     exportBackupButton: document.querySelector("#exportBackupButton"),
+    shareBackupButton: document.querySelector("#shareBackupButton"),
     importBackupButton: document.querySelector("#importBackupButton"),
     importBackupInput: document.querySelector("#importBackupInput"),
     closeSettingsButton: document.querySelector("#closeSettingsButton"),
@@ -627,29 +628,33 @@
     elements.backupNotice.textContent = risk || (recommended
       ? "バックアップ推奨です。進捗やお気に入りが増えています。"
       : "");
-    elements.exportBackupButton.textContent = state.backupExportArmed ? "この状態で保存" : "保存";
-    elements.exportBackupButton.classList.toggle("danger-button", state.backupExportArmed);
+    elements.exportBackupButton.textContent = state.backupActionArmed === "save" ? "この状態で保存" : "保存";
+    elements.shareBackupButton.textContent = state.backupActionArmed === "share" ? "この状態で共有" : "共有";
+    elements.exportBackupButton.classList.toggle("danger-button", state.backupActionArmed === "save");
+    elements.shareBackupButton.classList.toggle("danger-button", state.backupActionArmed === "share");
   }
 
   function resetBackupExportGuard() {
-    state.backupExportArmed = false;
+    state.backupActionArmed = null;
     elements.exportBackupButton.textContent = "保存";
+    elements.shareBackupButton.textContent = "共有";
     elements.exportBackupButton.classList.remove("danger-button");
+    elements.shareBackupButton.classList.remove("danger-button");
   }
 
-  function guardBackupExport() {
+  function guardBackupAction(action) {
     const risk = getBackupRisk();
     if (!risk) {
       resetBackupExportGuard();
       return true;
     }
-    if (state.backupExportArmed) return true;
+    if (state.backupActionArmed === action) return true;
 
-    state.backupExportArmed = true;
+    state.backupActionArmed = action;
+    const actionLabel = action === "share" ? "共有" : "保存";
+    renderSettingsPanel();
     elements.backupNotice.hidden = false;
-    elements.backupNotice.textContent = `${risk} 問題なければ、もう一度「この状態で保存」を押してください。`;
-    elements.exportBackupButton.textContent = "この状態で保存";
-    elements.exportBackupButton.classList.add("danger-button");
+    elements.backupNotice.textContent = `${risk} 問題なければ、もう一度「この状態で${actionLabel}」を押してください。`;
     return false;
   }
 
@@ -675,20 +680,17 @@
     ].join("-");
   }
 
-  function exportBackup() {
-    if (!guardBackupExport()) return;
-    const payload = createBackupPayload();
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `kotoba-karute-${formatBackupFileTimestamp(new Date())}.json`;
-    document.body.append(anchor);
-    anchor.click();
-    anchor.remove();
-    URL.revokeObjectURL(url);
+  function getBackupFileName(date = new Date()) {
+    return `kotoba-karute-${formatBackupFileTimestamp(date)}.json`;
+  }
+
+  function createBackupBlob(payload) {
+    return new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  }
+
+  function markBackupSaved(exportedAt) {
     saveBackupMeta({
-      exportedAt: payload.exportedAt,
+      exportedAt,
       ratedCount: getRatedCount(),
       bookmarkCount: getBookmarkCount(),
     });
@@ -697,6 +699,52 @@
     resetBackupExportGuard();
     renderSettingsPanel();
     renderBackupBadge();
+  }
+
+  function downloadBackupPayload(payload) {
+    const blob = createBackupBlob(payload);
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = getBackupFileName();
+    document.body.append(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+    markBackupSaved(payload.exportedAt);
+  }
+
+  function exportBackup() {
+    if (!guardBackupAction("save")) return;
+    downloadBackupPayload(createBackupPayload());
+  }
+
+  async function shareBackup() {
+    if (!guardBackupAction("share")) return;
+    const payload = createBackupPayload();
+    const file = new File([createBackupBlob(payload)], getBackupFileName(), { type: "application/json" });
+
+    if (navigator.share && navigator.canShare?.({ files: [file] })) {
+      try {
+        await navigator.share({
+          files: [file],
+          title: "ことばカルテ バックアップ",
+          text: "ことばカルテの進捗とお気に入りのバックアップです。",
+        });
+        markBackupSaved(payload.exportedAt);
+      } catch (error) {
+        resetBackupExportGuard();
+        if (error?.name !== "AbortError") {
+          elements.backupNotice.hidden = false;
+          elements.backupNotice.textContent = "この環境では直接共有できませんでした。代わりに保存してください。";
+        }
+      }
+      return;
+    }
+
+    elements.backupNotice.hidden = false;
+    elements.backupNotice.textContent = "この環境では直接共有できないため、ファイルとして保存します。";
+    downloadBackupPayload(payload);
   }
 
   function importBackupFile(file) {
@@ -862,6 +910,7 @@
     elements.settingsButton.addEventListener("click", openSettings);
     elements.closeSettingsButton.addEventListener("click", closeSettings);
     elements.exportBackupButton.addEventListener("click", exportBackup);
+    elements.shareBackupButton.addEventListener("click", shareBackup);
     elements.importBackupButton.addEventListener("click", () => elements.importBackupInput.click());
     elements.importBackupInput.addEventListener("change", (event) => importBackupFile(event.target.files?.[0]));
     elements.topBar.addEventListener("click", () => {
