@@ -1,11 +1,11 @@
-const CACHE_NAME = "kotoba-karute-v20260609-share-backup";
+const CACHE_NAME = "kotoba-karute-v20260811-ios-footer";
 
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./style.css?v=20260609-share-backup",
+  "./style.css?v=20260811-ios-footer",
   "./phrases.js?v=20260521-847",
-  "./app.js?v=20260609-share-backup",
+  "./app.js?v=20260811-ios-footer",
   "./manifest.webmanifest",
   "./icons/icon-192.png",
   "./icons/icon-512.png",

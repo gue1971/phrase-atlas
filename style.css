@@ -13,15 +13,25 @@
   --green: #2f6f5e;
   --red: #a64646;
   --shadow: 0 18px 45px rgba(31, 41, 51, 0.1);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --footer-y-padding: 10px;
+  --footer-control-size: 44px;
+  --footer-height: calc(var(--footer-control-size) + (var(--footer-y-padding) * 2) + var(--safe-bottom));
 }
 
 * {
   box-sizing: border-box;
 }
 
+html {
+  min-height: 100%;
+  background: var(--bg);
+}
+
 body {
   margin: 0;
   min-height: 100vh;
+  min-height: 100svh;
   background: var(--bg);
   color: var(--text);
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -41,12 +51,12 @@ button {
 .app-shell {
   width: min(1120px, calc(100% - 32px));
   margin: 0 auto;
-  padding: 82px 0 112px;
+  padding: 82px 0 calc(var(--footer-height) + 48px);
 }
 
 .view-detail .app-shell {
   padding-top: 64px;
-  padding-bottom: 102px;
+  padding-bottom: calc(var(--footer-height) + 38px);
 }
 
 .top-bar {
@@ -87,7 +97,8 @@ button {
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
-  padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+  min-height: var(--footer-height);
+  padding: var(--footer-y-padding) 16px calc(var(--footer-y-padding) + var(--safe-bottom));
   background: rgba(250, 250, 247, 0.96);
   border-top: 1px solid var(--line);
   backdrop-filter: blur(12px);
@@ -1161,16 +1172,20 @@ button:focus-visible {
 }
 
 @media (max-width: 760px) {
+  :root {
+    --footer-y-padding: 9px;
+  }
+
   .app-shell {
     width: min(100% - 20px, 1120px);
     padding-top: 78px;
-    padding-bottom: 102px;
+    padding-bottom: calc(var(--footer-height) + 40px);
   }
 
   .view-detail .app-shell {
     width: 100%;
     padding-top: 63px;
-    padding-bottom: 96px;
+    padding-bottom: calc(var(--footer-height) + 34px);
   }
 
   .top-bar {
@@ -1187,7 +1202,7 @@ button:focus-visible {
   .bottom-bar {
     grid-template-columns: minmax(86px, auto) minmax(92px, 1fr) minmax(86px, auto);
     gap: 8px;
-    padding: 9px 10px calc(9px + env(safe-area-inset-bottom));
+    padding: var(--footer-y-padding) 10px calc(var(--footer-y-padding) + var(--safe-bottom));
   }
 
   .footer-actions {
