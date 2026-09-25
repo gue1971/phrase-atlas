@@ -10,6 +10,17 @@ const DATA_DIR = path.join(ROOT, "data");
 const STATE_FILE = path.join(DATA_DIR, "sync-state.json");
 const MAX_BODY_SIZE = 2 * 1024 * 1024;
 const clients = new Map();
+const STATIC_FILES = new Set([
+  "index.html",
+  "style.css",
+  "phrases.js",
+  "app.js",
+  "sw.js",
+  "manifest.webmanifest",
+  "icons/icon-192.png",
+  "icons/icon-512.png",
+  "icons/apple-touch-icon.png",
+]);
 
 const MIME_TYPES = {
   ".css": "text/css; charset=utf-8",
@@ -93,6 +104,10 @@ function broadcast(state, sourceClientId) {
 async function serveFile(requestUrl, response) {
   const pathname = decodeURIComponent(requestUrl.pathname === "/" ? "/index.html" : requestUrl.pathname);
   const relative = pathname.replace(/^\/+/, "");
+  if (!STATIC_FILES.has(relative)) {
+    response.writeHead(404).end("Not found");
+    return;
+  }
   const filePath = path.resolve(ROOT, relative);
   if (!filePath.startsWith(`${ROOT}${path.sep}`)) {
     response.writeHead(403).end("Forbidden");
