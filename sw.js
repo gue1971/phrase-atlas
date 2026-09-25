@@ -1,11 +1,11 @@
-const CACHE_NAME = "kotoba-karute-v20260917-874";
+const CACHE_NAME = "kotoba-karute-v20260925-tailscale-sync";
 
 const APP_SHELL = [
   "./",
   "./index.html",
   "./style.css?v=20260811-ios-footer",
   "./phrases.js?v=20260917-874",
-  "./app.js?v=20260811-ios-footer",
+  "./app.js?v=20260925-tailscale-sync",
   "./manifest.webmanifest",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
@@ -45,6 +45,10 @@ self.addEventListener("fetch", (event) => {
   }
 
   const url = new URL(event.request.url);
+  if (url.pathname.startsWith("/api/")) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
   const networkFirstExtensions = [".html", ".js", ".css", ".webmanifest"];
   const shouldPreferNetwork = networkFirstExtensions.some((extension) => url.pathname.endsWith(extension));
 

@@ -2,16 +2,16 @@
 
 聞いたことある言葉の、出どころと背景。
 
-意味や人物があいまいな有名フレーズから教養を学ぶための静的Webアプリです。外部APIやサーバー実装は使っていません。
+意味や人物があいまいな有名フレーズから教養を学ぶためのWebアプリです。Tailscale内の同期サーバーを使い、端末間で進捗を共有できます。
 
 現在、基礎教養として優先度の高いフレーズを500件収録しています。
 
 ## 実行方法
 
-このフォルダで簡易サーバーを起動します。
+このフォルダで同期サーバーを起動します。
 
 ```bash
-python3 -m http.server 5174
+node server.mjs
 ```
 
 ブラウザで以下を開きます。
@@ -20,7 +20,9 @@ python3 -m http.server 5174
 http://localhost:5174/
 ```
 
-ファイルを直接開いても表示できますが、ローカルサーバー経由の確認を推奨します。
+Tailscale Serveを設定した端末では、Tailnet内のHTTPS URLから開きます。進捗・お気に入り・文字サイズは操作のたびに `data/sync-state.json` へ即時保存されます。接続できないときは端末内のlocalStorageを使い、次回接続時にサーバーの状態を読み込みます。
+
+このMacでは `deploy/com.kotoba-karute.sync.plist` をLaunchAgentとして登録し、ログイン時に同期サーバーを自動起動します。Tailscale Serveは `https://mac-mini.tailec7e85.ts.net/` をローカルの5174番へ接続します。
 
 ## データ検証
 

@@ -9,8 +9,18 @@
   const DETAIL_FONT_STORAGE_KEY = "phrase-atlas-detail-font-large";
   const BACKUP_META_STORAGE_KEY = "phrase-atlas-backup-meta";
   const RESTORE_PROMPT_STORAGE_KEY = "phrase-atlas-restore-prompt-seen";
+  const SYNC_PENDING_STORAGE_KEY = "phrase-atlas-sync-pending";
   const DEFAULT_PROGRESS_FILTERS = { unread: true, read: true, settled: true };
   const BACKUP_VERSION = 1;
+  const SYNC_ENDPOINT = "./api/state";
+  const SYNC_EVENTS_ENDPOINT = "./api/events";
+  const SYNC_CLIENT_ID = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
+  let syncWriteChain = Promise.resolve();
+  let syncConnected = false;
+  let syncApplying = false;
+  let syncUpdatedAt = null;
+  let syncChangeId = 0;
+  let syncEvents = null;
 
   const state = {
     query: "",
@@ -60,6 +70,7 @@
     settingsSettledCount: document.querySelector("#settingsSettledCount"),
     settingsBookmarkCount: document.querySelector("#settingsBookmarkCount"),
     lastBackupText: document.querySelector("#lastBackupText"),
+    syncStatusText: document.querySelector("#syncStatusText"),
     exportBackupButton: document.querySelector("#exportBackupButton"),
     shareBackupButton: document.querySelector("#shareBackupButton"),
     importBackupButton: document.querySelector("#importBackupButton"),
@@ -79,6 +90,7 @@
 
   function saveRatings() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state.ratings));
+    queueRemoteSync();
   }
 
   function loadBookmarks() {
@@ -91,6 +103,7 @@
 
   function saveBookmarks() {
     localStorage.setItem(BOOKMARK_STORAGE_KEY, JSON.stringify(state.bookmarks));
+    queueRemoteSync();
   }
 
   function loadDetailTextLarge() {
@@ -99,6 +112,101 @@
 
   function saveDetailTextLarge() {
     localStorage.setItem(DETAIL_FONT_STORAGE_KEY, String(state.detailTextLarge));
+    queueRemoteSync();
+  }
+
+  function createSyncPayload() {
+    return {
+      app: "kotoba-karute",
+      version: 2,
+      clientId: SYNC_CLIENT_ID,
+      knowledge: { ...state.ratings },
+      bookmarks: { ...state.bookmarks },
+      settings: { detailFontLarge: state.detailTextLarge },
+    };
+  }
+
+  function setSyncStatus(connected, updatedAt = syncUpdatedAt) {
+    syncConnected = connected;
+    syncUpdatedAt = updatedAt;
+    if (!elements.syncStatusText) return;
+    if (!connected) {
+      elements.syncStatusText.textContent = "同期: 端末内に保存中";
+      return;
+    }
+    const time = updatedAt ? new Date(updatedAt).toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" }) : "接続済み";
+    elements.syncStatusText.textContent = `Tailscale同期: ${time}`;
+  }
+
+  function queueRemoteSync() {
+    if (syncApplying) return;
+    const payload = createSyncPayload();
+    const changeId = ++syncChangeId;
+    localStorage.setItem(SYNC_PENDING_STORAGE_KEY, "true");
+    syncWriteChain = syncWriteChain
+      .catch(() => {})
+      .then(async () => {
+        const response = await fetch(SYNC_ENDPOINT, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!response.ok) throw new Error(`sync failed: ${response.status}`);
+        const saved = await response.json();
+        if (changeId === syncChangeId) localStorage.removeItem(SYNC_PENDING_STORAGE_KEY);
+        setSyncStatus(true, saved.updatedAt);
+      })
+      .catch(() => setSyncStatus(false));
+  }
+
+  function applyRemoteState(payload) {
+    syncApplying = true;
+    state.ratings = sanitizeRatings(payload.knowledge);
+    state.bookmarks = sanitizeBookmarks(payload.bookmarks);
+    state.detailTextLarge = Boolean(payload.settings?.detailFontLarge);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state.ratings));
+    localStorage.setItem(BOOKMARK_STORAGE_KEY, JSON.stringify(state.bookmarks));
+    localStorage.setItem(DETAIL_FONT_STORAGE_KEY, String(state.detailTextLarge));
+    syncApplying = false;
+    document.body.classList.toggle("detail-large-text", state.detailTextLarge);
+  }
+
+  async function loadRemoteState({ rerender = false } = {}) {
+    try {
+      if (localStorage.getItem(SYNC_PENDING_STORAGE_KEY) === "true") {
+        const response = await fetch(SYNC_ENDPOINT, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(createSyncPayload()),
+        });
+        if (!response.ok) throw new Error(`sync failed: ${response.status}`);
+        const saved = await response.json();
+        localStorage.removeItem(SYNC_PENDING_STORAGE_KEY);
+        setSyncStatus(true, saved.updatedAt);
+        return true;
+      }
+      const response = await fetch(SYNC_ENDPOINT, { cache: "no-store" });
+      if (!response.ok) throw new Error(`sync unavailable: ${response.status}`);
+      const payload = await response.json();
+      if (payload.app !== "kotoba-karute") throw new Error("invalid sync state");
+      applyRemoteState(payload);
+      setSyncStatus(true, payload.updatedAt);
+      if (rerender) {
+        renderCards();
+        if (state.selectedPhrase) renderDetail(state.selectedPhrase);
+        if (!elements.settingsOverlay.hidden) renderSettingsPanel();
+      }
+      return true;
+    } catch {
+      setSyncStatus(false);
+      return false;
+    }
+  }
+
+  function connectSyncEvents() {
+    if (!syncConnected || syncEvents || typeof EventSource === "undefined") return;
+    syncEvents = new EventSource(`${SYNC_EVENTS_ENDPOINT}?clientId=${encodeURIComponent(SYNC_CLIENT_ID)}`);
+    syncEvents.addEventListener("message", () => loadRemoteState({ rerender: true }));
   }
 
   function loadBackupMeta() {
@@ -353,6 +461,7 @@
   }
 
   function shouldRecommendBackup() {
+    if (syncConnected) return false;
     if (getBackupRisk()) return true;
     const meta = state.backupMeta;
     if (!meta?.exportedAt) return getRatedCount() > 0 || getBookmarkCount() > 0;
@@ -615,7 +724,7 @@
 
   function renderSettingsPanel() {
     const counts = getAllProgressCounts();
-    const risk = getBackupRisk();
+    const risk = syncConnected ? "" : getBackupRisk();
     elements.settingsUnreadCount.textContent = counts.unread;
     elements.settingsReadCount.textContent = counts.read;
     elements.settingsSettledCount.textContent = counts.settled;
@@ -623,6 +732,7 @@
     elements.lastBackupText.textContent = state.backupMeta?.exportedAt
       ? `最終バックアップ: ${new Date(state.backupMeta.exportedAt).toLocaleString("ja-JP")}`
       : "最終バックアップ: 未実施";
+    setSyncStatus(syncConnected);
     const recommended = shouldRecommendBackup();
     elements.backupNotice.hidden = !recommended;
     elements.backupNotice.textContent = risk || (recommended
@@ -961,11 +1071,17 @@
     });
   }
 
-  renderSelectOptions();
-  bindEvents();
-  openDetail(getInitialPhrase().id);
-  renderCards();
-  openRestorePromptIfNeeded();
+  async function initialize() {
+    renderSelectOptions();
+    bindEvents();
+    await loadRemoteState();
+    openDetail(getInitialPhrase().id);
+    renderCards();
+    if (syncConnected) connectSyncEvents();
+    else openRestorePromptIfNeeded();
+  }
+
+  initialize();
 
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
